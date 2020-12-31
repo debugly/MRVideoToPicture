@@ -1,0 +1,42 @@
+PODS:
+  - MRFFmpegPod (4.3):
+    - MRFFmpegPod/libavcodec (= 4.3)
+    - MRFFmpegPod/libavdevice (= 4.3)
+    - MRFFmpegPod/libavfilter (= 4.3)
+    - MRFFmpegPod/libavformat (= 4.3)
+    - MRFFmpegPod/libavutil (= 4.3)
+    - MRFFmpegPod/libswresample (= 4.3)
+    - MRFFmpegPod/libswscale (= 4.3)
+  - MRFFmpegPod/libavcodec (4.3)
+  - MRFFmpegPod/libavdevice (4.3)
+  - MRFFmpegPod/libavfilter (4.3)
+  - MRFFmpegPod/libavformat (4.3)
+  - MRFFmpegPod/libavutil (4.3)
+  - MRFFmpegPod/libswresample (4.3)
+  - MRFFmpegPod/libswscale (4.3)
+  - MRVTPKit (0.4.1):
+    - MRFFmpegPod
+    - MRVTPKit/common (= 0.4.1)
+    - MRVTPKit/core (= 0.4.1)
+  - MRVTPKit/common (0.4.1):
+    - MRFFmpegPod
+  - MRVTPKit/core (0.4.1):
+    - MRFFmpegPod
+
+DEPENDENCIES:
+  - MRFFmpegPod (from `https://ifoxdev.hd.sohu.com/ffpods/MRFFmpeg4.3.podspec`)
+  - MRVTPKit (from `../`)
+
+EXTERNAL SOURCES:
+  MRFFmpegPod:
+    :podspec: https://ifoxdev.hd.sohu.com/ffpods/MRFFmpeg4.3.podspec
+  MRVTPKit:
+    :path: "../"
+
+SPEC CHECKSUMS:
+  MRFFmpegPod: 30943db3429fd840e0121eaad251f0b5d0fdc4e5
+  MRVTPKit: 9c411f9d0c199909863cdacb55b95596a07ed323
+
+PODFILE CHECKSUM: 84e2349936e34ab23ecc72b5504570edc533ab4c
+
+COCOAPODS: 1.10.0

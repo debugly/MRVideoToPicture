@@ -1,0 +1,470 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 51;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		DD6ABD652595DA2B009D5A24 /* MR0x40ViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = DD6ABD5B2595DA2B009D5A24 /* MR0x40ViewController.m */; };
+		DD6ABD662595DA2B009D5A24 /* MR0x40ViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = DD6ABD5C2595DA2B009D5A24 /* MR0x40ViewController.xib */; };
+		DD6ABD672595DA2B009D5A24 /* MR0x40TableHeaderCell.m in Sources */ = {isa = PBXBuildFile; fileRef = DD6ABD5F2595DA2B009D5A24 /* MR0x40TableHeaderCell.m */; };
+		DD6ABD682595DA2B009D5A24 /* MR0x40Task.m in Sources */ = {isa = PBXBuildFile; fileRef = DD6ABD602595DA2B009D5A24 /* MR0x40Task.m */; };
+		DD6ABD692595DA2B009D5A24 /* MR0x40TextCellView.m in Sources */ = {isa = PBXBuildFile; fileRef = DD6ABD622595DA2B009D5A24 /* MR0x40TextCellView.m */; };
+		DD6ABD6A2595DA2B009D5A24 /* MR0x40IndicatorCellView.m in Sources */ = {isa = PBXBuildFile; fileRef = DD6ABD642595DA2B009D5A24 /* MR0x40IndicatorCellView.m */; };
+		DD6ABD6F2595DB09009D5A24 /* MRVerticallyCenteredTextFieldCell.m in Sources */ = {isa = PBXBuildFile; fileRef = DD6ABD6E2595DB09009D5A24 /* MRVerticallyCenteredTextFieldCell.m */; };
+		DD6ABD742595DB16009D5A24 /* MRDragView.m in Sources */ = {isa = PBXBuildFile; fileRef = DD6ABD732595DB16009D5A24 /* MRDragView.m */; };
+		DD6ABD792595DB20009D5A24 /* MRUtil.m in Sources */ = {isa = PBXBuildFile; fileRef = DD6ABD782595DB20009D5A24 /* MRUtil.m */; };
+		DDA6CCCE2595D8BA005CA8BF /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = DDA6CCCD2595D8BA005CA8BF /* AppDelegate.m */; };
+		DDA6CCD02595D8BD005CA8BF /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = DDA6CCCF2595D8BD005CA8BF /* Assets.xcassets */; };
+		DDA6CCD32595D8BD005CA8BF /* MainMenu.xib in Resources */ = {isa = PBXBuildFile; fileRef = DDA6CCD12595D8BD005CA8BF /* MainMenu.xib */; };
+		DDA6CCD62595D8BD005CA8BF /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = DDA6CCD52595D8BD005CA8BF /* main.m */; };
+		E6DF8C2DF118A00D7B752553 /* libPods-MRVideoToPicture.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 336C67983384EA33B3AD432F /* libPods-MRVideoToPicture.a */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		336C67983384EA33B3AD432F /* libPods-MRVideoToPicture.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-MRVideoToPicture.a"; sourceTree = BUILT_PRODUCTS_DIR; };
+		A90AE789455AE786A672A3E9 /* Pods-MRVideoToPicture.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-MRVideoToPicture.debug.xcconfig"; path = "Target Support Files/Pods-MRVideoToPicture/Pods-MRVideoToPicture.debug.xcconfig"; sourceTree = "<group>"; };
+		DD6ABD5A2595DA2B009D5A24 /* MR0x40Task.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MR0x40Task.h; sourceTree = "<group>"; };
+		DD6ABD5B2595DA2B009D5A24 /* MR0x40ViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MR0x40ViewController.m; sourceTree = "<group>"; };
+		DD6ABD5C2595DA2B009D5A24 /* MR0x40ViewController.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = MR0x40ViewController.xib; sourceTree = "<group>"; };
+		DD6ABD5D2595DA2B009D5A24 /* MR0x40TextCellView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MR0x40TextCellView.h; sourceTree = "<group>"; };
+		DD6ABD5E2595DA2B009D5A24 /* MR0x40IndicatorCellView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MR0x40IndicatorCellView.h; sourceTree = "<group>"; };
+		DD6ABD5F2595DA2B009D5A24 /* MR0x40TableHeaderCell.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MR0x40TableHeaderCell.m; sourceTree = "<group>"; };
+		DD6ABD602595DA2B009D5A24 /* MR0x40Task.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MR0x40Task.m; sourceTree = "<group>"; };
+		DD6ABD612595DA2B009D5A24 /* MR0x40ViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MR0x40ViewController.h; sourceTree = "<group>"; };
+		DD6ABD622595DA2B009D5A24 /* MR0x40TextCellView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MR0x40TextCellView.m; sourceTree = "<group>"; };
+		DD6ABD632595DA2B009D5A24 /* MR0x40TableHeaderCell.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MR0x40TableHeaderCell.h; sourceTree = "<group>"; };
+		DD6ABD642595DA2B009D5A24 /* MR0x40IndicatorCellView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MR0x40IndicatorCellView.m; sourceTree = "<group>"; };
+		DD6ABD6D2595DB09009D5A24 /* MRVerticallyCenteredTextFieldCell.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MRVerticallyCenteredTextFieldCell.h; sourceTree = "<group>"; };
+		DD6ABD6E2595DB09009D5A24 /* MRVerticallyCenteredTextFieldCell.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MRVerticallyCenteredTextFieldCell.m; sourceTree = "<group>"; };
+		DD6ABD722595DB16009D5A24 /* MRDragView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MRDragView.h; sourceTree = "<group>"; };
+		DD6ABD732595DB16009D5A24 /* MRDragView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MRDragView.m; sourceTree = "<group>"; };
+		DD6ABD772595DB20009D5A24 /* MRUtil.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MRUtil.h; sourceTree = "<group>"; };
+		DD6ABD782595DB20009D5A24 /* MRUtil.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MRUtil.m; sourceTree = "<group>"; };
+		DD6ABD7B2595DB30009D5A24 /* PrefixHeader.pch */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = PrefixHeader.pch; sourceTree = "<group>"; };
+		DDA6CCC92595D8BA005CA8BF /* MRVideoToPicture.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MRVideoToPicture.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		DDA6CCCC2595D8BA005CA8BF /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
+		DDA6CCCD2595D8BA005CA8BF /* AppDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AppDelegate.m; sourceTree = "<group>"; };
+		DDA6CCCF2595D8BD005CA8BF /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		DDA6CCD22595D8BD005CA8BF /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/MainMenu.xib; sourceTree = "<group>"; };
+		DDA6CCD42595D8BD005CA8BF /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		DDA6CCD52595D8BD005CA8BF /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
+		DDA6CCD72595D8BD005CA8BF /* MRVideoToPicture.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = MRVideoToPicture.entitlements; sourceTree = "<group>"; };
+		F47BFA6D83FD5E4FBD32CECA /* Pods-MRVideoToPicture.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-MRVideoToPicture.release.xcconfig"; path = "Target Support Files/Pods-MRVideoToPicture/Pods-MRVideoToPicture.release.xcconfig"; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		DDA6CCC62595D8BA005CA8BF /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				E6DF8C2DF118A00D7B752553 /* libPods-MRVideoToPicture.a in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		47B24C36B54C8ED38D5E49EC /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				336C67983384EA33B3AD432F /* libPods-MRVideoToPicture.a */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		DD6ABD592595DA2B009D5A24 /* 0x40 */ = {
+			isa = PBXGroup;
+			children = (
+				DD6ABD5A2595DA2B009D5A24 /* MR0x40Task.h */,
+				DD6ABD5B2595DA2B009D5A24 /* MR0x40ViewController.m */,
+				DD6ABD5C2595DA2B009D5A24 /* MR0x40ViewController.xib */,
+				DD6ABD5D2595DA2B009D5A24 /* MR0x40TextCellView.h */,
+				DD6ABD5E2595DA2B009D5A24 /* MR0x40IndicatorCellView.h */,
+				DD6ABD5F2595DA2B009D5A24 /* MR0x40TableHeaderCell.m */,
+				DD6ABD602595DA2B009D5A24 /* MR0x40Task.m */,
+				DD6ABD612595DA2B009D5A24 /* MR0x40ViewController.h */,
+				DD6ABD622595DA2B009D5A24 /* MR0x40TextCellView.m */,
+				DD6ABD632595DA2B009D5A24 /* MR0x40TableHeaderCell.h */,
+				DD6ABD642595DA2B009D5A24 /* MR0x40IndicatorCellView.m */,
+			);
+			path = 0x40;
+			sourceTree = "<group>";
+		};
+		DD6ABD6C2595DB09009D5A24 /* TextFieldCell */ = {
+			isa = PBXGroup;
+			children = (
+				DD6ABD6D2595DB09009D5A24 /* MRVerticallyCenteredTextFieldCell.h */,
+				DD6ABD6E2595DB09009D5A24 /* MRVerticallyCenteredTextFieldCell.m */,
+			);
+			path = TextFieldCell;
+			sourceTree = "<group>";
+		};
+		DD6ABD712595DB16009D5A24 /* DragView */ = {
+			isa = PBXGroup;
+			children = (
+				DD6ABD722595DB16009D5A24 /* MRDragView.h */,
+				DD6ABD732595DB16009D5A24 /* MRDragView.m */,
+			);
+			path = DragView;
+			sourceTree = "<group>";
+		};
+		DD6ABD762595DB20009D5A24 /* MRUtil */ = {
+			isa = PBXGroup;
+			children = (
+				DD6ABD772595DB20009D5A24 /* MRUtil.h */,
+				DD6ABD782595DB20009D5A24 /* MRUtil.m */,
+			);
+			path = MRUtil;
+			sourceTree = "<group>";
+		};
+		DDA6CCC02595D8BA005CA8BF = {
+			isa = PBXGroup;
+			children = (
+				DDA6CCCB2595D8BA005CA8BF /* MRVideoToPicture */,
+				DDA6CCCA2595D8BA005CA8BF /* Products */,
+				EC6101BEB21F74ECE54465DC /* Pods */,
+				47B24C36B54C8ED38D5E49EC /* Frameworks */,
+			);
+			sourceTree = "<group>";
+		};
+		DDA6CCCA2595D8BA005CA8BF /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				DDA6CCC92595D8BA005CA8BF /* MRVideoToPicture.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		DDA6CCCB2595D8BA005CA8BF /* MRVideoToPicture */ = {
+			isa = PBXGroup;
+			children = (
+				DD6ABD762595DB20009D5A24 /* MRUtil */,
+				DD6ABD712595DB16009D5A24 /* DragView */,
+				DD6ABD6C2595DB09009D5A24 /* TextFieldCell */,
+				DD6ABD592595DA2B009D5A24 /* 0x40 */,
+				DDA6CCCC2595D8BA005CA8BF /* AppDelegate.h */,
+				DDA6CCCD2595D8BA005CA8BF /* AppDelegate.m */,
+				DDA6CCCF2595D8BD005CA8BF /* Assets.xcassets */,
+				DDA6CCD12595D8BD005CA8BF /* MainMenu.xib */,
+				DDA6CCD42595D8BD005CA8BF /* Info.plist */,
+				DDA6CCD52595D8BD005CA8BF /* main.m */,
+				DDA6CCD72595D8BD005CA8BF /* MRVideoToPicture.entitlements */,
+				DD6ABD7B2595DB30009D5A24 /* PrefixHeader.pch */,
+			);
+			path = MRVideoToPicture;
+			sourceTree = "<group>";
+		};
+		EC6101BEB21F74ECE54465DC /* Pods */ = {
+			isa = PBXGroup;
+			children = (
+				A90AE789455AE786A672A3E9 /* Pods-MRVideoToPicture.debug.xcconfig */,
+				F47BFA6D83FD5E4FBD32CECA /* Pods-MRVideoToPicture.release.xcconfig */,
+			);
+			path = Pods;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		DDA6CCC82595D8BA005CA8BF /* MRVideoToPicture */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = DDA6CCDA2595D8BD005CA8BF /* Build configuration list for PBXNativeTarget "MRVideoToPicture" */;
+			buildPhases = (
+				A8A8BA15508F4910694C1EC9 /* [CP] Check Pods Manifest.lock */,
+				DDA6CCC52595D8BA005CA8BF /* Sources */,
+				DDA6CCC62595D8BA005CA8BF /* Frameworks */,
+				DDA6CCC72595D8BA005CA8BF /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = MRVideoToPicture;
+			productName = MRVideoToPicture;
+			productReference = DDA6CCC92595D8BA005CA8BF /* MRVideoToPicture.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		DDA6CCC12595D8BA005CA8BF /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				LastUpgradeCheck = 1200;
+				TargetAttributes = {
+					DDA6CCC82595D8BA005CA8BF = {
+						CreatedOnToolsVersion = 12.0.1;
+					};
+				};
+			};
+			buildConfigurationList = DDA6CCC42595D8BA005CA8BF /* Build configuration list for PBXProject "MRVideoToPicture" */;
+			compatibilityVersion = "Xcode 9.3";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = DDA6CCC02595D8BA005CA8BF;
+			productRefGroup = DDA6CCCA2595D8BA005CA8BF /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				DDA6CCC82595D8BA005CA8BF /* MRVideoToPicture */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		DDA6CCC72595D8BA005CA8BF /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				DDA6CCD02595D8BD005CA8BF /* Assets.xcassets in Resources */,
+				DD6ABD662595DA2B009D5A24 /* MR0x40ViewController.xib in Resources */,
+				DDA6CCD32595D8BD005CA8BF /* MainMenu.xib in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		A8A8BA15508F4910694C1EC9 /* [CP] Check Pods Manifest.lock */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"${PODS_PODFILE_DIR_PATH}/Podfile.lock",
+				"${PODS_ROOT}/Manifest.lock",
+			);
+			name = "[CP] Check Pods Manifest.lock";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(DERIVED_FILE_DIR)/Pods-MRVideoToPicture-checkManifestLockResult.txt",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
+			showEnvVarsInLog = 0;
+		};
+/* End PBXShellScriptBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		DDA6CCC52595D8BA005CA8BF /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				DD6ABD792595DB20009D5A24 /* MRUtil.m in Sources */,
+				DD6ABD6A2595DA2B009D5A24 /* MR0x40IndicatorCellView.m in Sources */,
+				DD6ABD692595DA2B009D5A24 /* MR0x40TextCellView.m in Sources */,
+				DDA6CCD62595D8BD005CA8BF /* main.m in Sources */,
+				DD6ABD742595DB16009D5A24 /* MRDragView.m in Sources */,
+				DDA6CCCE2595D8BA005CA8BF /* AppDelegate.m in Sources */,
+				DD6ABD672595DA2B009D5A24 /* MR0x40TableHeaderCell.m in Sources */,
+				DD6ABD682595DA2B009D5A24 /* MR0x40Task.m in Sources */,
+				DD6ABD652595DA2B009D5A24 /* MR0x40ViewController.m in Sources */,
+				DD6ABD6F2595DB09009D5A24 /* MRVerticallyCenteredTextFieldCell.m in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXVariantGroup section */
+		DDA6CCD12595D8BD005CA8BF /* MainMenu.xib */ = {
+			isa = PBXVariantGroup;
+			children = (
+				DDA6CCD22595D8BD005CA8BF /* Base */,
+			);
+			name = MainMenu.xib;
+			sourceTree = "<group>";
+		};
+/* End PBXVariantGroup section */
+
+/* Begin XCBuildConfiguration section */
+		DDA6CCD82595D8BD005CA8BF /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 10.11;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				OTHER_LDFLAGS = "";
+				SDKROOT = macosx;
+			};
+			name = Debug;
+		};
+		DDA6CCD92595D8BD005CA8BF /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 10.11;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				OTHER_LDFLAGS = "";
+				SDKROOT = macosx;
+			};
+			name = Release;
+		};
+		DDA6CCDB2595D8BD005CA8BF /* Debug */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = A90AE789455AE786A672A3E9 /* Pods-MRVideoToPicture.debug.xcconfig */;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = MRVideoToPicture/MRVideoToPicture.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = "${PRODUCT_NAME}/PrefixHeader.pch";
+				INFOPLIST_FILE = MRVideoToPicture/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = debugly.cn.MRVideoToPicture;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Debug;
+		};
+		DDA6CCDC2595D8BD005CA8BF /* Release */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = F47BFA6D83FD5E4FBD32CECA /* Pods-MRVideoToPicture.release.xcconfig */;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = MRVideoToPicture/MRVideoToPicture.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = "${PRODUCT_NAME}/PrefixHeader.pch";
+				INFOPLIST_FILE = MRVideoToPicture/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = debugly.cn.MRVideoToPicture;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		DDA6CCC42595D8BA005CA8BF /* Build configuration list for PBXProject "MRVideoToPicture" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				DDA6CCD82595D8BD005CA8BF /* Debug */,
+				DDA6CCD92595D8BD005CA8BF /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		DDA6CCDA2595D8BD005CA8BF /* Build configuration list for PBXNativeTarget "MRVideoToPicture" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				DDA6CCDB2595D8BD005CA8BF /* Debug */,
+				DDA6CCDC2595D8BD005CA8BF /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = DDA6CCC12595D8BA005CA8BF /* Project object */;
+}
