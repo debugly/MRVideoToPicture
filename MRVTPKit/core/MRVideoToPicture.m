@@ -34,6 +34,18 @@ kMRMovieInfoKey kMRMovieAudioFmt = @"kMRMovieAudioFmt";
 //视频旋转角度
 kMRMovieInfoKey kMRMovieRotate = @"kMRMovieRotate";
 
+NS_INLINE
+void dispatch_sync_to_main_queue(dispatch_block_t block)
+{
+    if (!block) {
+        return;
+    }
+    if (0 == strcmp(dispatch_queue_get_label(DISPATCH_CURRENT_QUEUE_LABEL), dispatch_queue_get_label(dispatch_get_main_queue()))) {
+        block();
+    } else {
+        dispatch_sync(dispatch_get_main_queue(), block);
+    }
+}
 
 @interface MRVideoToPicture ()<MRDecoderDelegate>
 {
@@ -69,22 +81,11 @@ static int decode_interrupt_cb(void *ctx)
 
 - (void)_stop
 {
-    //避免重复stop做无用功
+    //仅仅标记为取消
     if (self.workThread) {
-        
-        videoq.abort_request = 1;
-        
-        [self.audioDecoder cancel];
-        [self.videoDecoder cancel];
         [self.workThread cancel];
-        
-        self.audioDecoder = nil;
-        self.videoDecoder = nil;
-        
-        [self.workThread join];
-        self.workThread = nil;
-        
-        packet_queue_destroy(&videoq);
+        [self.videoDecoder cancel];
+        videoq.abort_request = 1;
     }
 }
 
@@ -99,6 +100,7 @@ static int decode_interrupt_cb(void *ctx)
     if (self) {
         self.perferMaxCount = INT_MAX;
         self.maxPicDimension = INT_MAX;
+        self.picSaveDir = NSTemporaryDirectory();
     }
     return self;
 }
@@ -466,7 +468,7 @@ static int decode_interrupt_cb(void *ctx)
             [dumpDic setObject:format forKey:kMRMovieContainerFmt];
         }
     }
-    self.duration = (int)(formatCtx->duration / AV_TIME_BASE);
+    self.duration = (int)(formatCtx->duration / 1000000);
     [dumpDic setObject:@(self.duration) forKey:kMRMovieDuration];
     
     //创建解码器
@@ -520,10 +522,17 @@ static int decode_interrupt_cb(void *ctx)
     });
 
     if (self.videoDecoder) {
-        //视频解码线程开始工作，读包完全由解码器控制，解码后转成图片也由解码回调控制
+        //开始视频解码，读包完全由解码器控制，解码后转成图片也由解码回调控制
         [self.videoDecoder start];
-        //解码线程结束了，销毁下相关结构体
+        //解码结束了，销毁下相关结构体
         avformat_close_input(&formatCtx);
+        //正常结束时才回调
+        if (![self isAbort]) {
+            [self performErrorResultOnMainThread:nil];
+        }
+        self.videoDecoder = nil;
+        self.workThread = nil;
+        packet_queue_destroy(&videoq);
     } else {
         //出错了，销毁下相关结构体
         avformat_close_input(&formatCtx);
@@ -531,9 +540,13 @@ static int decode_interrupt_cb(void *ctx)
         NSString *videoFmt = dumpDic[kMRMovieVideoFmt];
         NSString *msg = [NSString stringWithFormat:@"can't open [%@] video stream",videoFmt];
         av_log(NULL, AV_LOG_ERROR, "%s\n",[msg UTF8String]);
-        
-        NSError* error = _make_nserror_desc(FFPlayerErrorCode_StreamOpenFailed, msg);
-        [self performErrorResultOnMainThread:error];
+        //正常结束时才回调
+        if (![self isAbort]) {
+            NSError* error = _make_nserror_desc(FFPlayerErrorCode_StreamOpenFailed, msg);
+            [self performErrorResultOnMainThread:error];
+        }
+        self.workThread = nil;
+        packet_queue_destroy(&videoq);
     }
 }
 
@@ -601,52 +614,211 @@ static int decode_interrupt_cb(void *ctx)
     }
 }
 
-- (void)decoderEOF:(MRDecoder *)decoder
+- (NSString *)saveAsImage:(CGImageRef _Nonnull)img dir:(NSString *)dir
 {
-    if (decoder == self.videoDecoder) {
-        if (self.readEOF) {
-            [self performErrorResultOnMainThread:nil];
+    int64_t time = [[NSDate date] timeIntervalSince1970] * 10000;
+    NSString *fileName = nil;
+    CFStringRef imageUTType = NULL;
+    
+    switch (self.imageType) {
+        case MRVTPImageJPG:
+        {
+            fileName = [NSString stringWithFormat:@"%lld.jpg",time];
+            imageUTType = kUTTypeJPEG;
         }
+            break;
+        case MRVTPImagePNG:
+        {
+            fileName = [NSString stringWithFormat:@"%lld.png",time];
+            imageUTType = kUTTypePNG;
+        }
+            break;
+        case MRVTPImageBMP:
+        {
+            fileName = [NSString stringWithFormat:@"%lld.bmp",time];
+            imageUTType = kUTTypeBMP;
+        }
+            break;
+        case MRVTPImageTIFF:
+        {
+            fileName = [NSString stringWithFormat:@"%lld.tiff",time];
+            imageUTType = kUTTypeTIFF;
+        }
+            break;
+        case MRVTPImagePDF:
+        {
+            fileName = [NSString stringWithFormat:@"%lld.pdf",time];
+            imageUTType = kUTTypePDF;
+        }
+            break;
+        case MRVTPImageGIF:
+        {
+            fileName = [NSString stringWithFormat:@"%lld.gif",time];
+            imageUTType = kUTTypeGIF;
+        }
+            break;
+//        case MRVTPImageICO:
+//        {
+//            //writeAll:105: *** cannot create non-square ICO image (320 x 176)
+//            fileName = [NSString stringWithFormat:@"%lld.ico",time];
+//            imageUTType = kUTTypeICO;
+//        }
+//            break;
+//        case MRVTPImageICNS:
+//        {
+//            //writeAll:570: unsupported ICNS image size (320 x 176) - scaling factor: 1  dpi: 72 x 72
+//            fileName = [NSString stringWithFormat:@"%lld.icns",time];
+//            imageUTType = kUTTypeAppleICNS;
+//        }
+//            break;
+//        case MRVTPImageRAW:
+//        {
+//            //findWriterForTypeAndAlternateType:119: unsupported file format 'public.camera-raw-image'
+//
+//            fileName = [NSString stringWithFormat:@"%lld.raw",time];
+//            imageUTType = kUTTypeRawImage;
+//        }
+//            break;
+//        case MRVTPImageSVG:
+//        {
+//            //findWriterForTypeAndAlternateType:119: unsupported file format 'public.svg-image'
+//            fileName = [NSString stringWithFormat:@"%lld.svg",time];
+//            imageUTType = kUTTypeScalableVectorGraphics;
+//        }
+//            break;
     }
-}
-
-- (BOOL)saveAsJpeg:(CGImageRef _Nonnull)img path:(NSString *)path
-{
-    CFStringRef imageUTType = kUTTypeJPEG;
-    NSURL *fileUrl = [NSURL fileURLWithPath:path];
+    
+    NSString *imgPath = [dir stringByAppendingPathComponent:fileName];
+    NSURL *fileUrl = [NSURL fileURLWithPath:imgPath];
     CGImageDestinationRef destination = CGImageDestinationCreateWithURL((__bridge CFURLRef) fileUrl, imageUTType, 1, NULL);
     if (destination) {
         CGImageDestinationAddImage(destination, img, NULL);
         CGImageDestinationFinalize(destination);
         CFRelease(destination);
-        return YES;
+        return imgPath;
     }
-    return NO;
+    return nil;
 }
 
-- (NSString *)picSaveDir
+//逆时针旋转90度
+- (CGImageRef)createRotated90AngleImage:(CGImageRef)source
 {
-    if (!_picSaveDir) {
-        _picSaveDir = NSTemporaryDirectory();
-    }
-    return _picSaveDir;
+    int width  = (int)CGImageGetWidth(source);
+    int height = (int)CGImageGetHeight(source);
+    
+    int bitsPerComponent = (int)CGImageGetBitsPerComponent(source);
+    int bitsPerPixel = (int)CGImageGetBitsPerPixel(source);
+    int bytesPerRow = bitsPerPixel / 8 * height;
+    
+    CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceRGB();
+    CGBitmapInfo bitmapInfo = CGImageGetBitmapInfo(source);
+    
+    CGContextRef bitmap = CGBitmapContextCreate(NULL, height, width, bitsPerComponent, bytesPerRow, colorSpace, bitmapInfo);
+    
+    double radius = 90 * M_PI / 180;
+    
+    // move to the rotation relative point
+    CGContextTranslateCTM(bitmap, height, 0);
+    
+    // Rotate the image context
+    CGContextRotateCTM(bitmap, radius);
+    
+    // Now, draw the rotated/scaled image into the context
+    CGContextDrawImage(bitmap, CGRectMake(0, 0, width, height), source);
+    
+    CGImageRef result = CGBitmapContextCreateImage(bitmap);
+    CGContextRelease(bitmap);
+    CGColorSpaceRelease(colorSpace);
+    
+    return (CGImageRef)CFAutorelease(result);
 }
 
-- (NSString *)convertAngSaveAsJPEG:(AVFrame *)frame
+//逆时针旋转180度
+- (CGImageRef)createRotated180AngleImage:(CGImageRef)source
 {
-    NSString *imgPath = nil;
+    int width  = (int)CGImageGetWidth(source);
+    int height = (int)CGImageGetHeight(source);
+    
+    int bitsPerComponent = (int)CGImageGetBitsPerComponent(source);
+    int bytesPerRow = (int)CGImageGetBytesPerRow(source);
+    
+    CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceRGB();
+    CGBitmapInfo bitmapInfo = CGImageGetBitmapInfo(source);
+    
+    CGContextRef bitmap = CGBitmapContextCreate(NULL, width, height, bitsPerComponent, bytesPerRow, colorSpace, bitmapInfo);
+    
+    double radius = 180 * M_PI / 180;
+    
+    // move to the rotation relative point
+    CGContextTranslateCTM(bitmap, width, height);
+    
+    // Rotate the image context
+    CGContextRotateCTM(bitmap, radius);
+    
+    // Now, draw the rotated/scaled image into the context
+    CGContextDrawImage(bitmap, CGRectMake(0, 0, width, height), source);
+    
+    CGImageRef result = CGBitmapContextCreateImage(bitmap);
+    CGContextRelease(bitmap);
+    CGColorSpaceRelease(colorSpace);
+    
+    return (CGImageRef)CFAutorelease(result);
+}
+
+//逆时针旋转270度
+- (CGImageRef)createRotated270AngleImage:(CGImageRef)source
+{
+    int width  = (int)CGImageGetWidth(source);
+    int height = (int)CGImageGetHeight(source);
+    
+    int bitsPerComponent = (int)CGImageGetBitsPerComponent(source);
+    int bitsPerPixel = (int)CGImageGetBitsPerPixel(source);
+    int bytesPerRow = bitsPerPixel / 8 * height;
+    
+    CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceRGB();
+    CGBitmapInfo bitmapInfo = CGImageGetBitmapInfo(source);
+    
+    CGContextRef bitmap = CGBitmapContextCreate(NULL, height, width, bitsPerComponent, bytesPerRow, colorSpace, bitmapInfo);
+    
+    double radius = 270 * M_PI / 180;
+    
+    // move to the rotation relative point
+    CGContextTranslateCTM(bitmap, 0, width);
+    
+    // Rotate the image context
+    CGContextRotateCTM(bitmap, radius);
+    
+    // Now, draw the rotated/scaled image into the context
+    CGContextDrawImage(bitmap, CGRectMake(0, 0, width, height), source);
+    
+    CGImageRef result = CGBitmapContextCreateImage(bitmap);
+    CGContextRelease(bitmap);
+    CGColorSpaceRelease(colorSpace);
+    
+    return (CGImageRef)CFAutorelease(result);
+}
+
+- (CGImageRef)rotateIfNeed:(CGImageRef)source angle:(MRDecoderVideoRotate)angle
+{
+    switch (angle) {
+        case MRDecoderVideoRotateNone:
+            return source;
+        case MRDecoderVideoRotate90:
+            return [self createRotated270AngleImage:source];
+        case MRDecoderVideoRotate180:
+            return [self createRotated180AngleImage:source];
+        case MRDecoderVideoRotate270:
+            return [self createRotated90AngleImage:source];
+    }
+}
+
+- (NSString *)convertAndSaveAsImage:(AVFrame *)frame
+{
     @autoreleasepool {
         CGImageRef img = [MRConvertUtil cgImageFromRGBFrame:frame];
-        if (img) {
-            int64_t time = [[NSDate date] timeIntervalSince1970] * 10000;
-            NSString *fileName = [NSString stringWithFormat:@"%lld.jpg",time];
-            NSString *_imgPath = [self.picSaveDir stringByAppendingPathComponent:fileName];
-            if ([self saveAsJpeg:img path:_imgPath]) {
-                imgPath = _imgPath;
-            }
-        }
+        img = [self rotateIfNeed:img angle:self.videoDecoder.rotate];
+        return [self saveAsImage:img dir:self.picSaveDir];
     }
-    return imgPath;
 }
 
 - (void)convertToPic:(AVFrame *)frame
@@ -657,19 +829,21 @@ static int decode_interrupt_cb(void *ctx)
     
     NSString * imgPath = nil;
     BOOL hasPts = YES;
+    int sec = -1;
     if (frame->pts != AV_NOPTS_VALUE) {
-        int sec = (int)(frame->pts * av_q2d(self.videoDecoder.stream->time_base));
+        //mpegts pts not start 0
+        sec = (int)((frame->pts - self.videoDecoder.startTime) * av_q2d(self.videoDecoder.stream->time_base));
         if (lastFramePts < sec) {
             av_log(NULL, AV_LOG_DEBUG, "frame->pts:%ds\n",sec);
-            imgPath = [self convertAngSaveAsJPEG:frame];
             lastFramePts = sec + imgPath.length > 0 ? [self compatibleStride] : 0;
+            imgPath = [self convertAndSaveAsImage:frame];
         } else {
             av_log(NULL, AV_LOG_DEBUG, "ignored frame->pts:%ds\n",sec);
         }
     } else {
         // 没有pts
         hasPts = NO;
-        imgPath = [self convertAngSaveAsJPEG:frame];
+        imgPath = [self convertAndSaveAsImage:frame];
     }
     
     if (!imgPath) {
@@ -680,19 +854,18 @@ static int decode_interrupt_cb(void *ctx)
         //提取的图片够了，就提前停止
         [[NSFileManager defaultManager] removeItemAtPath:imgPath error:nil];
         //因为stop里有join操作，使用 dispatch_sync 时会导致线程卡住，一直等待join
-        [self stop];
+        [self _stop];
         //主动回调下
         [self performErrorResultOnMainThread:nil];
     } else {
         self.frameCount++;
-        
-        dispatch_async(dispatch_get_main_queue(), ^{
-            if ([self.delegate respondsToSelector:@selector(vtp:convertAnImage:)]) {
-                [self.delegate vtp:self convertAnImage:imgPath];
+        dispatch_sync_to_main_queue(^{
+            if ([self.delegate respondsToSelector:@selector(vtp:convertAnImage:pst:)]) {
+                [self.delegate vtp:self convertAnImage:imgPath pst:sec];
             }
             
             if (self.onConvertAnImageBlock) {
-                self.onConvertAnImageBlock(self, imgPath);
+                self.onConvertAnImageBlock(self, imgPath, sec);
             }
         });
     }
@@ -700,11 +873,7 @@ static int decode_interrupt_cb(void *ctx)
 
 - (void)performErrorResultOnMainThread:(NSError*)error
 {
-    if (![NSThread isMainThread]) {
-        dispatch_async(dispatch_get_main_queue(), ^{
-            [self performErrorResultOnMainThread:error];
-        });
-    } else {
+    dispatch_sync_to_main_queue(^{
         if ([self.delegate respondsToSelector:@selector(vtp:convertFinished:)]) {
             [self.delegate vtp:self convertFinished:error];
         }
@@ -712,7 +881,7 @@ static int decode_interrupt_cb(void *ctx)
         if (self.onConvertFinishedBlock) {
             self.onConvertFinishedBlock(self, error);
         }
-    }
+    });
 }
 
 - (void)startConvert
@@ -723,6 +892,11 @@ static int decode_interrupt_cb(void *ctx)
 
 - (void)stop
 {
+    //主动stop时，则取消掉后续回调
+    self.delegate = nil;
+    self.onVideoOpenedBlock = nil;
+    self.onConvertAnImageBlock = nil;
+    self.onConvertFinishedBlock = nil;
     [self _stop];
 }
 

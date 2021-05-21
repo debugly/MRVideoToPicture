@@ -9,13 +9,11 @@
 
 @interface MRThread ()
 
-@property (nonatomic, weak) id threadTarget;
-@property (nonatomic, strong) NSThread *thread;
-@property (nonatomic, assign) SEL threadSelector;//实际调度任务
-@property (nonatomic, strong) id threadArgs;
-@property (nonatomic, copy) void(^workBlock)(void);
-@property (nonatomic, strong) NSRunLoop *currentRunloop;
-@property (nonatomic, strong) NSPort *runloopPort;
+@property (weak) id threadTarget;
+@property (strong) NSThread *thread;
+@property (assign) SEL threadSelector;//实际调度任务
+@property (strong) id threadArgs;
+@property (copy) void(^workBlock)(void);
 
 @end
 
@@ -23,14 +21,13 @@
 
 - (void)dealloc
 {
-    //NSLog(@"%@ thread dealloc",self.name);
+    //NSLog(@"MR %@ thread dealloc",self.name);
 }
 
 - (instancetype)init
 {
     self = [super init];
     if (self) {
-        self.runloopPort = [NSPort port];
         self.thread = [[NSThread alloc] initWithTarget:self selector:@selector(workFunc) object:nil];
     }
     return self;
@@ -81,54 +78,12 @@
                 self.workBlock();
             }
         }
-        
-        //线程即使已经取消仍旧使用runloop等待join；除非明确不需要等待
-        while (self.runloopPort) {
-            //NSLog(@"%@ will runUntilDate!",[[NSThread currentThread] name]);
-            if (!self.currentRunloop) {
-                self.currentRunloop = [NSRunLoop currentRunLoop];
-                //增加一个 port，让 RunLoop run 起来
-                [self.currentRunloop addPort:self.runloopPort forMode:NSDefaultRunLoopMode];
-            }
-           
-            [self.currentRunloop runUntilDate:[NSDate dateWithTimeIntervalSinceNow:0.1]];
-            
-            //NSLog(@"%@ after runUntilDate!",[[NSThread currentThread] name]);
-        }
     }
-}
-
-- (void)bye
-{
-    //NSLog(@"bye:%@",self.name);
-    [self notJoin];
 }
 
 - (void)start
 {
     [self.thread start];
-}
-
-- (BOOL)join
-{
-    if ([self.thread isExecuting] && ![self.thread isFinished]) {
-        if ([NSThread currentThread] == self.thread) {
-            [self notJoin];
-            return YES;
-        } else {
-            [self performSelector:@selector(bye) onThread:self.thread withObject:nil waitUntilDone:YES];
-            return YES;
-        }
-    }
-    return NO;
-}
-
-- (void)notJoin
-{
-    if (self.runloopPort) {
-        [self.runloopPort removeFromRunLoop:self.currentRunloop forMode:NSDefaultRunLoopMode];
-        self.runloopPort = nil;
-    }
 }
 
 - (void)cancel

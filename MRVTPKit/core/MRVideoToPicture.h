@@ -34,18 +34,32 @@ FOUNDATION_EXPORT kMRMovieInfoKey kMRMovieAudioFmt;
 //视频旋转角度
 FOUNDATION_EXPORT kMRMovieInfoKey kMRMovieRotate;
 
+typedef enum : NSUInteger {
+    MRVTPImageJPG,
+    MRVTPImagePNG,
+    MRVTPImageBMP,
+    MRVTPImageTIFF,
+    MRVTPImagePDF,
+    MRVTPImageGIF
+//    MRVTPImageICO,
+//    MRVTPImageICNS,
+//    MRVTPImageRAW,
+//    MRVTPImageSVG
+} MRVTPImageType;
+
 @class MRVideoToPicture;
 
 typedef void (^MROnVideoOpenedBlock)(MRVideoToPicture*, NSDictionary <kMRMovieInfoKey,id> *);
-typedef void (^MROnConvertAnImageBlock)(MRVideoToPicture*, NSString *);
-typedef void (^MROnConvertFinishedBlock)(MRVideoToPicture*, NSError *);
+typedef void (^MROnConvertAnImageBlock)(MRVideoToPicture*, NSString *, int);
+typedef void (^MROnConvertFinishedBlock)(MRVideoToPicture*, NSError * _Nullable);
 
 @protocol MRVideoToPictureDelegate <NSObject>
 
 //代理方法均在主线程里回调
 @optional
 - (void)vtp:(MRVideoToPicture*)vtp videoOpened:(NSDictionary <kMRMovieInfoKey,id> *)info;
-- (void)vtp:(MRVideoToPicture*)vtp convertAnImage:(NSString *)imgPath;
+//pst is picture position(unit:s),when pst is -1 means the video hasn't pts!
+- (void)vtp:(MRVideoToPicture*)vtp convertAnImage:(NSString *)imgPath pst:(int)pst;
 - (void)vtp:(MRVideoToPicture*)vtp convertFinished:(NSError *)err;
 
 @end

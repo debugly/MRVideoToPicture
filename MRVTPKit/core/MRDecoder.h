@@ -33,8 +33,6 @@ typedef struct AVFrame AVFrame;
 - (void)decoder:(MRDecoder *)decoder reveivedAFrame:(AVFrame *)frame;
 ///是否还有更多的包需要解码
 - (BOOL)decoderHasMorePacket:(MRDecoder *)decoder;
-///解码结束
-- (void)decoderEOF:(MRDecoder *)decoder;
 
 @end
 
@@ -51,6 +49,8 @@ typedef struct AVFrame AVFrame;
 @property (assign, readonly) int picHeight;
 @property (copy, readonly) NSString * codecName;
 @property (assign) MRDecoderVideoRotate rotate;
+//the position of pts begin,in AV_TIME_BASE fractional seconds
+@property (assign, readonly) int64_t startTime;
 
 - (void)dumpStreamFormat;
 /**

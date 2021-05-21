@@ -19,6 +19,7 @@
 @property (assign, readwrite) int picWidth;
 @property (assign, readwrite) int picHeight;
 @property (copy, readwrite) NSString * codecName;
+@property (assign, readwrite) int64_t startTime;
 
 @end
 
@@ -63,6 +64,8 @@
         //根据解码器id找到对应名称
         const char *codecName = avcodec_get_name(codecID);
         self.codecName = [[NSString alloc] initWithUTF8String:codecName];
+        //not use ic's start_time
+        //self.startTime = self.ic->start_time;
     }
 }
 
@@ -129,6 +132,7 @@
     self.rotate = [self getRotateAngle:stream];
     self.stream = stream;
     self.avctx = avctx;
+    self.startTime = stream->start_time;
     return YES;
 }
 
@@ -232,15 +236,11 @@
     if (frame) {
         av_frame_free(&frame);
     }
-    
-    if ([self.delegate respondsToSelector:@selector(decoderEOF:)]) {
-        [self.delegate decoderEOF:self];
-    }
 }
 
 - (void)cancel
 {
-    self.abort_request = 1;
+    self.abort_request = YES;
 }
 
 
