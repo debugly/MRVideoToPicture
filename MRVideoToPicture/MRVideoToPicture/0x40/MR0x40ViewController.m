@@ -15,6 +15,7 @@
 
 static NSString *const kVideoNameIdentifier = @"videoName";
 static NSString *const kDimensionIdentifier = @"dimension";
+static NSString *const kRotationIdentifier = @"rotation";
 static NSString *const kContainerFmtIdentifier = @"container";
 static NSString *const kAudioFmtIdentifier = @"audioFmt";
 static NSString *const kVideoFmtIdentifier = @"videoFmt";
@@ -148,6 +149,27 @@ static NSString *const kTaskStatusIdentifier = @"status";
     
     {
         NSTableColumn *column = [self createTableColumn];
+        column.title = @"旋转";
+        column.sortDescriptorPrototype = [NSSortDescriptor sortDescriptorWithKey:@"rotation" ascending:YES comparator:^NSComparisonResult(id  _Nonnull obj1, id  _Nonnull obj2) {
+            int size1 = [obj1 intValue];
+            int size2 = [obj2 intValue];
+            int r = size1 - size2;
+            if (r < 0) {
+                return NSOrderedAscending;
+            } else if (r > 0){
+                return NSOrderedDescending;
+            } else {
+                return NSOrderedSame;
+            }
+        }];
+        column.identifier = kRotationIdentifier;
+        column.width = remindWidth;
+        column.minWidth = 40;
+        [tableView addTableColumn:column];
+    }
+    
+    {
+        NSTableColumn *column = [self createTableColumn];
         column.sortDescriptorPrototype = [NSSortDescriptor sortDescriptorWithKey:@"duration" ascending:YES];
         column.title = @"时长";
         column.identifier = kDurationIdentifier;
@@ -230,6 +252,8 @@ static NSString *const kTaskStatusIdentifier = @"status";
             [cellView updateText:task.videoName];
         } else if ([kDimensionIdentifier isEqualToString:tableColumn.identifier]) {
             [cellView updateText:NSStringFromSize(task.dimension)];
+        } else if ([kRotationIdentifier isEqualToString:tableColumn.identifier]) {
+            [cellView updateText:[NSString stringWithFormat:@"%d",task.rotation]];
         } else if ([kContainerFmtIdentifier isEqualToString:tableColumn.identifier]) {
             [cellView updateText:task.containerFmt];
         } else if ([kAudioFmtIdentifier isEqualToString:tableColumn.identifier]) {

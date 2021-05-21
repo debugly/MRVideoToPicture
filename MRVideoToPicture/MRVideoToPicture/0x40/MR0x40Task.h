@@ -24,6 +24,7 @@ typedef enum : NSUInteger {
 @property (nonatomic, assign, readonly) int perferCount;
 
 @property (nonatomic, assign, readonly) int duration;
+@property (nonatomic, assign, readonly) int rotation;
 @property (nonatomic, copy, readonly) NSString *videoName;
 @property (nonatomic, assign, readonly) NSSize dimension;
 @property (nonatomic, copy, readonly) NSString *containerFmt;

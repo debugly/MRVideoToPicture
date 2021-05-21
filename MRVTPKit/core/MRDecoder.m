@@ -66,6 +66,25 @@
     }
 }
 
+- (MRDecoderVideoRotate)getRotateAngle:(AVStream*)avStream
+{
+    AVDictionaryEntry *tag = NULL;
+    MRDecoderVideoRotate m_Rotate = MRDecoderVideoRotateNone;
+    tag = av_dict_get(avStream->metadata, "rotate", tag, 0);
+    if (tag != NULL) {
+        int angle = atoi(tag->value);
+        angle %= 360;
+        if (angle == 90) {
+            m_Rotate = MRDecoderVideoRotate90;
+        } else if (angle == 180) {
+            m_Rotate = MRDecoderVideoRotate180;
+        } else if (angle == 270) {
+            m_Rotate = MRDecoderVideoRotate270;
+        }
+    }
+    return m_Rotate;
+}
+
 - (BOOL)open
 {
     if (self.ic == NULL) {
@@ -107,9 +126,9 @@
         avcodec_free_context(&avctx);
         return NO;
     }
+    self.rotate = [self getRotateAngle:stream];
     self.stream = stream;
     self.avctx = avctx;
-    
     return YES;
 }
 

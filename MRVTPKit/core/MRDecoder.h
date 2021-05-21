@@ -11,6 +11,13 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
+typedef enum : NSUInteger {
+    MRDecoderVideoRotateNone = 0,
+    MRDecoderVideoRotate90 = 90,
+    MRDecoderVideoRotate180 = 180,
+    MRDecoderVideoRotate270 = 270,
+} MRDecoderVideoRotate;
+
 typedef struct AVStream AVStream;
 typedef struct AVFormatContext AVFormatContext;
 typedef struct AVPacket AVPacket;
@@ -43,6 +50,7 @@ typedef struct AVFrame AVFrame;
 @property (nonatomic, assign, readonly) int picWidth;
 @property (nonatomic, assign, readonly) int picHeight;
 @property (nonatomic, copy, readonly) NSString * codecName;
+@property (nonatomic, assign) MRDecoderVideoRotate rotate;
 
 - (void)dumpStreamFormat;
 /**

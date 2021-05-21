@@ -20,6 +20,7 @@ static const int kMaxPictureCount = 30;
 @property (nonatomic, assign) NSTimeInterval begin;
 @property (nonatomic, assign, readwrite) NSTimeInterval cost;
 @property (nonatomic, assign, readwrite) int duration;
+@property (nonatomic, assign, readwrite) int rotation;
 @property (nonatomic, assign, readwrite) int frameCount;
 @property (nonatomic, assign, readwrite) int perferCount;
 @property (nonatomic, copy, readwrite) NSString *videoName;
@@ -131,6 +132,7 @@ static const int kMaxPictureCount = 30;
     self.containerFmt = info[kMRMovieContainerFmt];
     self.audioFmt = info[kMRMovieAudioFmt];
     self.videoFmt = info[kMRMovieVideoFmt];
+    self.rotation = [info[kMRMovieRotate] intValue];
     self.perferCount = self.vtp.perferMaxCount;
 }
 

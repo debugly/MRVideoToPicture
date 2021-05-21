@@ -31,6 +31,9 @@ kMRMovieInfoKey kMRMovieHeight = @"kMRMovieHeight";
 kMRMovieInfoKey kMRMovieVideoFmt = @"kMRMovieVideoFmt";
 //音频编码格式
 kMRMovieInfoKey kMRMovieAudioFmt = @"kMRMovieAudioFmt";
+//视频旋转角度
+kMRMovieInfoKey kMRMovieRotate = @"kMRMovieRotate";
+
 
 @interface MRVideoToPicture ()<MRDecoderDelegate>
 {
@@ -41,6 +44,7 @@ kMRMovieInfoKey kMRMovieAudioFmt = @"kMRMovieAudioFmt";
     int lastFramePts;//单位s
 }
 
+@property (nonatomic, readwrite) NSDictionary <kMRMovieInfoKey,id> * movieInfo;
 //读包线程
 @property (nonatomic, strong) MRThread *workThread;
 //视频解码器
@@ -464,7 +468,7 @@ static int decode_interrupt_cb(void *ctx)
             [dumpDic setObject:format forKey:kMRMovieContainerFmt];
         }
     }
-    self.duration = (int)(formatCtx->duration / 1000000);
+    self.duration = (int)(formatCtx->duration / AV_TIME_BASE);
     [dumpDic setObject:@(self.duration) forKey:kMRMovieDuration];
     
     //创建解码器
@@ -483,6 +487,8 @@ static int decode_interrupt_cb(void *ctx)
             self.videoDecoder.delegate = self;
             self.videoDecoder.name = @"videoDecoder";
             [self createVideoScaleIfNeed];
+            
+            [dumpDic setObject:@(videoDecoder.rotate) forKey:kMRMovieRotate];
         }
     }
     
@@ -504,6 +510,7 @@ static int decode_interrupt_cb(void *ctx)
 //        }
     }
     
+    self.movieInfo = [dumpDic copy];
     //这里采用同步目的是为了，让代理能够修改 vtp 的属性，比如根据视频时长修改perferInterval等
     dispatch_sync(dispatch_get_main_queue(), ^{
         if (self.delegate && [self.delegate respondsToSelector:@selector(vtp:videoOpened:)]) {

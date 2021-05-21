@@ -31,6 +31,8 @@ FOUNDATION_EXPORT kMRMovieInfoKey kMRMovieHeight;
 FOUNDATION_EXPORT kMRMovieInfoKey kMRMovieVideoFmt;
 //音频编码格式
 FOUNDATION_EXPORT kMRMovieInfoKey kMRMovieAudioFmt;
+//视频旋转角度
+FOUNDATION_EXPORT kMRMovieInfoKey kMRMovieRotate;
 
 @class MRVideoToPicture;
 
@@ -60,6 +62,7 @@ typedef void (^MROnConvertFinishedBlock)(MRVideoToPicture*, NSError *);
 @property (nonatomic, copy) MROnVideoOpenedBlock onVideoOpenedBlock;
 @property (nonatomic, copy) MROnConvertAnImageBlock onConvertAnImageBlock;
 @property (nonatomic, copy) MROnConvertFinishedBlock onConvertFinishedBlock;
+@property (nonatomic, readonly) NSDictionary <kMRMovieInfoKey,id> * movieInfo;
 
 ///期望帧间隔时长
 @property (nonatomic, assign) int perferInterval;
