@@ -1,6 +1,6 @@
 //
 //  MRDecoder.h
-//  FFmpegTutorial
+//  MRVTPKit
 //
 //  Created by Matt Reach on 2020/6/2.
 //
@@ -40,17 +40,17 @@ typedef struct AVFrame AVFrame;
 
 @interface MRDecoder : NSObject
 
-@property (nonatomic, assign) AVFormatContext *ic;
-@property (nonatomic, assign) int streamIdx;
-@property (nonatomic, copy) NSString * name;
-@property (nonatomic, weak) id <MRDecoderDelegate> delegate;
-@property (nonatomic, assign, readonly) AVStream * stream;
+@property (assign) AVFormatContext *ic;
+@property (assign) int streamIdx;
+@property (copy) NSString * name;
+@property (weak) id <MRDecoderDelegate> delegate;
+@property (assign, readonly) AVStream * stream;
 //for video
-@property (nonatomic, assign) enum AVPixelFormat pix_fmt;
-@property (nonatomic, assign, readonly) int picWidth;
-@property (nonatomic, assign, readonly) int picHeight;
-@property (nonatomic, copy, readonly) NSString * codecName;
-@property (nonatomic, assign) MRDecoderVideoRotate rotate;
+@property (assign) enum AVPixelFormat pix_fmt;
+@property (assign, readonly) int picWidth;
+@property (assign, readonly) int picHeight;
+@property (copy, readonly) NSString * codecName;
+@property (assign) MRDecoderVideoRotate rotate;
 
 - (void)dumpStreamFormat;
 /**

@@ -1,6 +1,6 @@
 //
 //  MRVideoToPicture.h
-//  FFmpegTutorial
+//  MRVTPKit
 //
 //  Created by qianlongxu on 2020/6/2.
 //
@@ -53,27 +53,29 @@ typedef void (^MROnConvertFinishedBlock)(MRVideoToPicture*, NSError *);
 @interface MRVideoToPicture : NSObject
 
 ///播放地址
-@property (nonatomic, copy) NSString *contentPath;
+@property (copy) NSString *contentPath;
 ///期望的像素格式
-@property (nonatomic, assign) MRPixelFormatMask supportedPixelFormats;
+@property (assign) MRPixelFormatMask supportedPixelFormats;
+///保存图片格式
+@property (assign) MRVTPImageType imageType;
 ///通过代理接收回调
-@property (nonatomic, weak) id<MRVideoToPictureDelegate> delegate;
+@property (weak) id<MRVideoToPictureDelegate> delegate;
 ///通过block接收回调
-@property (nonatomic, copy) MROnVideoOpenedBlock onVideoOpenedBlock;
-@property (nonatomic, copy) MROnConvertAnImageBlock onConvertAnImageBlock;
-@property (nonatomic, copy) MROnConvertFinishedBlock onConvertFinishedBlock;
-@property (nonatomic, readonly) NSDictionary <kMRMovieInfoKey,id> * movieInfo;
+@property (copy, nullable) MROnVideoOpenedBlock onVideoOpenedBlock;
+@property (copy, nullable) MROnConvertAnImageBlock onConvertAnImageBlock;
+@property (copy, nullable) MROnConvertFinishedBlock onConvertFinishedBlock;
+@property (readonly) NSDictionary <kMRMovieInfoKey,id> * movieInfo;
 
 ///期望帧间隔时长
-@property (nonatomic, assign) int perferInterval;
+@property (assign) int perferInterval;
 ///期望总张数，当获取不到pts时，会超出期望值
-@property (nonatomic, assign) int perferMaxCount;
-@property (nonatomic, assign, readonly) int frameCount;
-@property (nonatomic, copy) NSString *picSaveDir;
+@property (assign) int perferMaxCount;
+@property (assign, readonly) int frameCount;
+@property (copy) NSString *picSaveDir;
 ///期望使用seek代替逐帧读取
-@property (nonatomic, assign) BOOL perferUseSeek;
+@property (assign) BOOL perferUseSeek;
 ///图片最大尺寸
-@property (nonatomic, assign) int maxPicDimension;
+@property (assign) int maxPicDimension;
 ///准备
 - (void)prepareToPlay;
 ///开始提取

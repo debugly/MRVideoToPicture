@@ -1,6 +1,6 @@
 //
 //  MRDecoder.m
-//  FFmpegTutorial
+//  MRVTPKit
 //
 //  Created by Matt Reach on 2020/6/2.
 //
@@ -12,13 +12,13 @@
 @interface MRDecoder()
 
 //解码线程
-@property (nonatomic, assign, readwrite) AVStream * stream;
-@property (nonatomic, assign) AVCodecContext * avctx;
-@property (nonatomic, assign) int abort_request;
+@property (assign, readwrite) AVStream * stream;
+@property (assign) AVCodecContext * avctx;
+@property (atomic, assign) BOOL abort_request;
 //for video
-@property (nonatomic, assign, readwrite) int picWidth;
-@property (nonatomic, assign, readwrite) int picHeight;
-@property (nonatomic, copy, readwrite) NSString * codecName;
+@property (assign, readwrite) int picWidth;
+@property (assign, readwrite) int picHeight;
+@property (copy, readwrite) NSString * codecName;
 
 @end
 

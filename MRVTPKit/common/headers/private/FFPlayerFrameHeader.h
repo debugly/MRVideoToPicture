@@ -1,6 +1,6 @@
 //
 //  FFPlayerFrameHeader.h
-//  FFmpegTutorial
+//  MRVTPKit
 //
 //  Created by Matt Reach on 2020/5/14.
 //
@@ -221,7 +221,7 @@ static __inline__ Frame *frame_queue_peek_last(FrameQueue *f)
 static __inline__ void frame_queue_pop(FrameQueue *f)
 {
     //标记为已显示，不移动读指针
-    if(f->keep_last && !f->rindex_shown) {
+    if (f->keep_last && !f->rindex_shown) {
         f->rindex_shown = 1;
         return;
     }

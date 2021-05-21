@@ -1,6 +1,6 @@
 //
 //  MRVideoToPicture.m
-//  FFmpegTutorial
+//  MRVTPKit
 //
 //  Created by qianlongxu on 2020/6/2.
 //
@@ -44,20 +44,18 @@ kMRMovieInfoKey kMRMovieRotate = @"kMRMovieRotate";
     int lastFramePts;//单位s
 }
 
-@property (nonatomic, readwrite) NSDictionary <kMRMovieInfoKey,id> * movieInfo;
+@property (readwrite) NSDictionary <kMRMovieInfoKey,id> * movieInfo;
 //读包线程
-@property (nonatomic, strong) MRThread *workThread;
+@property (strong) MRThread *workThread;
 //视频解码器
-@property (nonatomic, strong) MRDecoder *videoDecoder;
-//音频解码器
-@property (nonatomic, strong) MRDecoder *audioDecoder;
+@property (strong) MRDecoder *videoDecoder;
 //图像格式转换/缩放器
-@property (nonatomic, strong) MRVideoScale *videoScale;
+@property (strong) MRVideoScale *videoScale;
 //读包完毕？
 @property (atomic, assign) BOOL readEOF;
-@property (nonatomic, assign) int frameCount;
-@property (nonatomic, assign) int pktCount;
-@property (nonatomic, assign) int duration;
+@property (assign) int frameCount;
+@property (assign) int pktCount;
+@property (assign) int duration;
 
 @end
 
@@ -256,7 +254,7 @@ static int decode_interrupt_cb(void *ctx)
                     } else {
                         av_packet_unref(pkt);
                     }
-                } else if(AV_NOPTS_VALUE != pkt->dts) {
+                } else if (AV_NOPTS_VALUE != pkt->dts) {
                     if (lastPkts < pkt->dts) {
                         lastPkts = pkt->dts;
                         packet_queue_put(&videoq, pkt);
@@ -501,7 +499,7 @@ static int decode_interrupt_cb(void *ctx)
         }
         
         //目前抽帧没必要打开音频流解码器
-//        if([audioDecoder open]){
+//        if ([audioDecoder open]) {
 //            self.audioDecoder = audioDecoder;
 //            self.audioDecoder.delegate = self;
 //            self.audioDecoder.name = @"audioDecoder";
@@ -512,7 +510,7 @@ static int decode_interrupt_cb(void *ctx)
     
     self.movieInfo = [dumpDic copy];
     //这里采用同步目的是为了，让代理能够修改 vtp 的属性，比如根据视频时长修改perferInterval等
-    dispatch_sync(dispatch_get_main_queue(), ^{
+    dispatch_sync_to_main_queue(^{
         if (self.delegate && [self.delegate respondsToSelector:@selector(vtp:videoOpened:)]) {
             [self.delegate vtp:self videoOpened:dumpDic];
         }

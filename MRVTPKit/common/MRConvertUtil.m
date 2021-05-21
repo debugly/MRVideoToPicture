@@ -1,6 +1,6 @@
 //
 //  MRConvertUtil.m
-//  FFmpegTutorial
+//  MRVTPKit
 //
 //  Created by Matt Reach on 2020/6/3.
 //
@@ -18,8 +18,8 @@ CGImageRef _CreateCGImageFromBitMap(void *pixels, size_t w, size_t h, size_t bpc
     /*
      AV_PIX_FMT_RGB24 bpp is 24! not supported!
      Crash:
-     2020-06-06 00:08:20.245208+0800 FFmpegTutorial[23649:2335631] [Unknown process name] CGBitmapContextCreate: unsupported parameter combination: set CGBITMAP_CONTEXT_LOG_ERRORS environmental variable to see the details
-     2020-06-06 00:08:20.245417+0800 FFmpegTutorial[23649:2335631] [Unknown process name] CGBitmapContextCreateImage: invalid context 0x0. If you want to see the backtrace, please set CG_CONTEXT_SHOW_BACKTRACE environmental variable.
+     2020-06-06 00:08:20.245208+0800 MRVTPKit[23649:2335631] [Unknown process name] CGBitmapContextCreate: unsupported parameter combination: set CGBITMAP_CONTEXT_LOG_ERRORS environmental variable to see the details
+     2020-06-06 00:08:20.245417+0800 MRVTPKit[23649:2335631] [Unknown process name] CGBitmapContextCreateImage: invalid context 0x0. If you want to see the backtrace, please set CG_CONTEXT_SHOW_BACKTRACE environmental variable.
      */
     
     CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceRGB();
@@ -179,14 +179,14 @@ CGImageRef _CreateCGImage(void *pixels,size_t w, size_t h, size_t bpc, size_t bp
     
     int pixelFormatType = 0;
     
-    if (format == AV_PIX_FMT_RGB24){
+    if (format == AV_PIX_FMT_RGB24) {
         pixelFormatType = kCVPixelFormatType_24RGB;
-    } else if(format == AV_PIX_FMT_ARGB || format == AV_PIX_FMT_0RGB){
+    } else if (format == AV_PIX_FMT_ARGB || format == AV_PIX_FMT_0RGB) {
         pixelFormatType = kCVPixelFormatType_32ARGB;
-    } else if(format == AV_PIX_FMT_NV12 || format == AV_PIX_FMT_NV21){
+    } else if (format == AV_PIX_FMT_NV12 || format == AV_PIX_FMT_NV21) {
         pixelFormatType = fullRange ? kCVPixelFormatType_420YpCbCr8BiPlanarFullRange : kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange;
         //for AV_PIX_FMT_NV21: later will swap VU. we won't modify the avframe data, because the frame can be dispaly again!
-    } else if(format == AV_PIX_FMT_BGRA || format == AV_PIX_FMT_BGR0){
+    } else if (format == AV_PIX_FMT_BGRA || format == AV_PIX_FMT_BGR0) {
         pixelFormatType = kCVPixelFormatType_32BGRA;
     }
 //    RGB555 可以创建出 CVPixelBuffer，但是显示时失败了。
@@ -218,7 +218,7 @@ CGImageRef _CreateCGImage(void *pixels,size_t w, size_t h, size_t bpc, size_t bp
     }
     
     CVPixelBufferPoolRef pixelBufferPool = NULL;
-    if (kCVReturnSuccess != CVPixelBufferPoolCreate(kCFAllocatorDefault, NULL, (__bridge CFDictionaryRef) attributes, &pixelBufferPool)){
+    if (kCVReturnSuccess != CVPixelBufferPoolCreate(kCFAllocatorDefault, NULL, (__bridge CFDictionaryRef) attributes, &pixelBufferPool)) {
         NSLog(@"CVPixelBufferPoolCreate Failed");
         return NULL;
     } else {
@@ -277,7 +277,7 @@ CGImageRef _CreateCGImage(void *pixels,size_t w, size_t h, size_t bpc, size_t bp
          AV_PIX_FMT_RGB555BE,
          AV_PIX_FMT_RGB555LE,
          */
-        if(format == AV_PIX_FMT_BGRA || format == AV_PIX_FMT_BGR0 || format == AV_PIX_FMT_ARGB || format == AV_PIX_FMT_0RGB || format == AV_PIX_FMT_RGB24 || format == AV_PIX_FMT_RGB555BE || format == AV_PIX_FMT_RGB555LE){
+        if (format == AV_PIX_FMT_BGRA || format == AV_PIX_FMT_BGR0 || format == AV_PIX_FMT_ARGB || format == AV_PIX_FMT_0RGB || format == AV_PIX_FMT_RGB24 || format == AV_PIX_FMT_RGB555BE || format == AV_PIX_FMT_RGB555LE) {
            uint8_t *rgb_src  = frame->data[0];
            uint8_t *rgb_dest = CVPixelBufferGetBaseAddressOfPlane(pixelBuffer, 0);
            size_t src_bytesPerRow  = frame->linesize[0];
@@ -288,7 +288,7 @@ CGImageRef _CreateCGImage(void *pixels,size_t w, size_t h, size_t bpc, size_t bp
                rgb_src  += src_bytesPerRow;
                rgb_dest += dest_bytesPerRow;
            }
-        } else if(format == AV_PIX_FMT_NV12 || format == AV_PIX_FMT_NV21){
+        } else if (format == AV_PIX_FMT_NV12 || format == AV_PIX_FMT_NV21) {
             
             // Here y_src is Y-Plane of YUV(NV12) data.
             uint8_t *y_src  = frame->data[0];
