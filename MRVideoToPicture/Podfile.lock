@@ -14,13 +14,13 @@ PODS:
   - MRFFmpegPod/libavutil (4.3)
   - MRFFmpegPod/libswresample (4.3)
   - MRFFmpegPod/libswscale (4.3)
-  - MRVTPKit (0.4.1):
+  - MRVTPKit (0.4.2):
     - MRFFmpegPod
-    - MRVTPKit/common (= 0.4.1)
-    - MRVTPKit/core (= 0.4.1)
-  - MRVTPKit/common (0.4.1):
+    - MRVTPKit/common (= 0.4.2)
+    - MRVTPKit/core (= 0.4.2)
+  - MRVTPKit/common (0.4.2):
     - MRFFmpegPod
-  - MRVTPKit/core (0.4.1):
+  - MRVTPKit/core (0.4.2):
     - MRFFmpegPod
 
 DEPENDENCIES:
@@ -35,7 +35,7 @@ EXTERNAL SOURCES:
 
 SPEC CHECKSUMS:
   MRFFmpegPod: 30943db3429fd840e0121eaad251f0b5d0fdc4e5
-  MRVTPKit: 9c411f9d0c199909863cdacb55b95596a07ed323
+  MRVTPKit: 6fc1d7a13c09c41ec4e8d12f22ec4a97eca9d976
 
 PODFILE CHECKSUM: 84e2349936e34ab23ecc72b5504570edc533ab4c
 
