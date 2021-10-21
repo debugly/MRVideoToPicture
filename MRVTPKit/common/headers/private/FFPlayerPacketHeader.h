@@ -83,9 +83,10 @@ static __inline__ int packet_queue_put(PacketQueue *q, AVPacket *pkt)
     ///解锁
     dispatch_semaphore_signal(q->mutex);
 
-    if (ret < 0)
+    if (ret < 0) {
         av_packet_unref(pkt);
-
+    }
+    
     return ret;
 }
 
@@ -158,10 +159,10 @@ static __inline__ int packet_queue_get(PacketQueue *q, AVPacket *pkt, int block)
             ret = 0;
             break;
         }
-        ///阻塞形式，则休眠10ms后开始新一轮的检查
+        ///阻塞形式，则休眠3ms后开始新一轮的检查
         else {
             dispatch_semaphore_signal(q->mutex);
-            mr_usleep(10000);
+            mr_usleep(3000);
             dispatch_semaphore_wait(q->mutex, DISPATCH_TIME_FOREVER);
         }
     }

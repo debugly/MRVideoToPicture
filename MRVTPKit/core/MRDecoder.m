@@ -226,6 +226,10 @@
             } else {
                 #warning todo fill pts
             }
+            if (self.picWidth == 0 || self.picHeight == 0) {
+                self.picWidth = frame->width;
+                self.picHeight = frame->height;
+            }
             if ([self.delegate respondsToSelector:@selector(decoder:reveivedAFrame:)]) {
                 [self.delegate decoder:self reveivedAFrame:frame];
             }

@@ -119,6 +119,7 @@ static int decode_interrupt_cb(void *ctx)
     
     lastPkts = -1;
     lastSeekPos = -1;
+    lastFramePts = -1;
     //初始化视频包队列
     packet_queue_init(&videoq);
     //初始化ffmpeg相关函数
@@ -166,19 +167,6 @@ static int decode_interrupt_cb(void *ctx)
     }
 }
 
-- (int)compatibleStride
-{
-    if (self.duration < 60) {
-        return 0;
-    } else if (self.duration < 300) {
-        return MAX(self.perferInterval / 3, 1);
-    } else if (self.duration < 1800) {
-        return MAX(self.perferInterval / 2, 3);
-    } else {
-        return MAX(self.perferInterval * 3 / 4, 10);
-    }
-}
-
 //读包循环
 - (void)readPacketLoop:(AVFormatContext *)formatCtx
 {
@@ -196,7 +184,6 @@ static int decode_interrupt_cb(void *ctx)
             break;
         }
         
-        /* 队列不满继续读，满了则休眠10 ms */
         if (videoq.size > 1 * 1024 * 1024
             || (stream_has_enough_packets(self.videoDecoder.stream, self.videoDecoder.streamIdx, &videoq))) {
             break;
@@ -227,6 +214,7 @@ static int decode_interrupt_cb(void *ctx)
                 
                 //gif 不能按关键帧处理
                 if (![self.videoDecoder.codecName isEqualToString:@"gif"]) {
+                    // 忽略非关键帧
                     if (!(pkt->flags & AV_PKT_FLAG_KEY)) {
                         av_packet_unref(pkt);
                         continue;
@@ -248,26 +236,15 @@ static int decode_interrupt_cb(void *ctx)
                         lastPkts = pts;
 
                         packet_queue_put(&videoq, pkt);
-                        packet_queue_put_nullpacket(&videoq, pkt->stream_index);
                         self.pktCount ++;
                         if (!self.perferUseSeek) {
-                            lastPkts += [self compatibleStride];
+                            lastPkts += self.perferInterval;
                         }
-                    } else {
-                        av_packet_unref(pkt);
-                    }
-                } else if (AV_NOPTS_VALUE != pkt->dts) {
-                    if (lastPkts < pkt->dts) {
-                        lastPkts = pkt->dts;
-                        packet_queue_put(&videoq, pkt);
-                        packet_queue_put_nullpacket(&videoq, pkt->stream_index);
-                        self.pktCount ++;
                     } else {
                         av_packet_unref(pkt);
                     }
                 } else {
                     packet_queue_put(&videoq, pkt);
-                    packet_queue_put_nullpacket(&videoq, pkt->stream_index);
                     self.pktCount ++;
                 }
                 
@@ -374,25 +351,28 @@ static int decode_interrupt_cb(void *ctx)
         return;
     }
     
-    int dstWidth = 0;
-    int dstHeight = 0;
-    //宽屏视频
-    if (self.videoDecoder.picWidth > self.videoDecoder.picHeight) {
-        dstWidth = MIN(self.videoDecoder.picWidth, self.maxPicDimension);
-        dstHeight = dstWidth * self.videoDecoder.picHeight / self.videoDecoder.picWidth;
-    } else {
-        //竖屏视频
-        dstHeight = MIN(self.videoDecoder.picHeight, self.maxPicDimension);
-        dstWidth = dstHeight * self.videoDecoder.picWidth / self.videoDecoder.picHeight;
+    //拿到了视频宽高，再缩放；否则除数为0引发 SIGFPE 崩溃
+    if (self.videoDecoder.picWidth > 0 && self.videoDecoder.picHeight > 0) {
+        int dstWidth = 0;
+        int dstHeight = 0;
+        //宽屏视频
+        if (self.videoDecoder.picWidth > self.videoDecoder.picHeight) {
+            dstWidth = MIN(self.videoDecoder.picWidth, self.maxPicDimension);
+            dstHeight = dstWidth * self.videoDecoder.picHeight / self.videoDecoder.picWidth;
+        } else {
+            //竖屏视频
+            dstHeight = MIN(self.videoDecoder.picHeight, self.maxPicDimension);
+            dstWidth = dstHeight * self.videoDecoder.picWidth / self.videoDecoder.picHeight;
+        }
+        
+        //创建像素格式转换上下文
+        self.videoScale = [[MRVideoScale alloc] initWithSrcPixFmt:format
+                                                        dstPixFmt:MRPixelFormat2AV(firstSupportedFmt)
+                                                         srcWidth:self.videoDecoder.picWidth
+                                                        srcHeight:self.videoDecoder.picHeight
+                                                         dstWidth:dstWidth
+                                                        dstHeight:dstHeight];
     }
-    
-    //创建像素格式转换上下文
-    self.videoScale = [[MRVideoScale alloc] initWithSrcPixFmt:format
-                                                    dstPixFmt:MRPixelFormat2AV(firstSupportedFmt)
-                                                     srcWidth:self.videoDecoder.picWidth
-                                                    srcHeight:self.videoDecoder.picHeight
-                                                     dstWidth:dstWidth
-                                                    dstHeight:dstHeight];
 }
 
 - (void)workFunc
@@ -554,13 +534,12 @@ static int decode_interrupt_cb(void *ctx)
 
 - (int)decoder:(MRDecoder *)decoder wantAPacket:(AVPacket *)pkt
 {
-    if ([self isAbort]) {
-        return -1;
-    }
-    
     if (decoder == self.videoDecoder) {
         int ret = -1;
         do {
+            if ([self isAbort]) {
+                break;
+            }
             int r = packet_queue_get(&videoq, pkt, 0);
             if (r == 1) {
                 ret = 1;
@@ -834,14 +813,15 @@ static int decode_interrupt_cb(void *ctx)
         //mpegts pts not start 0
         sec = (int)((frame->pts - self.videoDecoder.startTime) * av_q2d(self.videoDecoder.stream->time_base));
         if (lastFramePts < sec) {
-            av_log(NULL, AV_LOG_DEBUG, "frame->pts:%ds\n",sec);
-            lastFramePts = sec + imgPath.length > 0 ? [self compatibleStride] : 0;
+            av_log(NULL, AV_LOG_INFO, "frame->pts:%ds\n",sec);
             imgPath = [self convertAndSaveAsImage:frame];
+            lastFramePts = sec + imgPath.length > 0 ? self.perferInterval : 0;
         } else {
-            av_log(NULL, AV_LOG_DEBUG, "ignored frame->pts:%ds\n",sec);
+            av_log(NULL, AV_LOG_INFO, "ignored frame->pts:%ds\n",sec);
         }
     } else {
         // 没有pts
+        av_log(NULL, AV_LOG_INFO, "frame no pts\n");
         hasPts = NO;
         imgPath = [self convertAndSaveAsImage:frame];
     }
