@@ -156,7 +156,7 @@
                 return 1;
             }
             
-            //结束标志，此次并没有获取到frame！
+            //解码到读包线程放入的空包就会触发结束，此次并没有获取到frame！
             if (ret == AVERROR_EOF) {
                 avcodec_flush_buffers(avctx);
                 return AVERROR_EOF;
@@ -172,17 +172,18 @@
             r = [self.delegate decoder:self wantAPacket:&pkt];
         }
         
-        if (r < 0)
+        if (r >= 0)
         {
-            return -1;
+            //发送给解码器去解码
+            if (avcodec_send_packet(avctx, &pkt) == AVERROR(EAGAIN)) {
+                av_log(avctx, AV_LOG_ERROR, "Receive_frame and send_packet both returned EAGAIN, which is an API violation.\n");
+            }
+            
+            //释放内存
+            av_packet_unref(&pkt);
         }
         
-        //发送给解码器去解码
-        if (avcodec_send_packet(avctx, &pkt) == AVERROR(EAGAIN)) {
-            av_log(avctx, AV_LOG_ERROR, "Receive_frame and send_packet both returned EAGAIN, which is an API violation.\n");
-        }
-        //释放内存
-        av_packet_unref(&pkt);
+        return r;
     }
 }
 
@@ -196,7 +197,7 @@
         av_log(NULL, AV_LOG_ERROR, "%s can't alloc a frame.\n",[self.name UTF8String]);
         return;
     }
-    do {
+    for (;;) {
         //使用通用方法解码一帧
         int got_frame = [self decodeAFrame:self.avctx result:frame];
         //解码出错
@@ -214,7 +215,7 @@
                     break;
                 }
             } else if (self.abort_request){
-                av_log(NULL, AV_LOG_ERROR, "%s cancel.\n",[self.name UTF8String]);
+                av_log(NULL, AV_LOG_INFO, "%s cancel.\n",[self.name UTF8String]);
             } else {
                 av_log(NULL, AV_LOG_ERROR, "%s decode err %d.\n",[self.name UTF8String],got_frame);
             }
@@ -234,7 +235,7 @@
                 [self.delegate decoder:self reveivedAFrame:frame];
             }
         }
-    } while (1);
+    }
     
     //释放内存
     if (frame) {
@@ -246,6 +247,5 @@
 {
     self.abort_request = YES;
 }
-
 
 @end

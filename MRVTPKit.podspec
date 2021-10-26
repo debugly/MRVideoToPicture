@@ -1,5 +1,5 @@
 #
-# Be sure to run `pod lib lint FFmpegTutorial.podspec' to ensure this is a
+# Be sure to run `pod lib lint MRVTPKit.podspec' to ensure this is a
 # valid spec before submitting.
 #
 # Any lines starting with a # are optional, but their use is encouraged
@@ -21,20 +21,21 @@ Pod::Spec.new do |s|
 TODO: Add long description of the pod here.
                        DESC
 
-  s.homepage         = 'https://github.com/debugly/FFmpegTutorial'
+  s.homepage         = 'https://github.com/debugly/MRVideoToPicture'
   s.license          = { :type => 'MIT', :text => 'LICENSE' }
   s.author           = { 'MattReach' => 'qianlongxu@gmail.com' }
-  s.source           = { :git => 'https://github.com/debugly/FFmpegTutorial.git', :tag => s.version.to_s }
+  s.source           = { :git => 'https://github.com/debugly/MRVideoToPicture.git', :tag => s.version.to_s }
 
-  s.osx.deployment_target = '10.10'
-  # s.pod_target_xcconfig = {
-  #   'ALWAYS_SEARCH_USER_PATHS' => 'YES',
-  #   'HEADER_SEARCH_PATHS' => [
-  #     '$(inherited)',
-  #     '${PODS_TARGET_SRCROOT}/MRVTPKit/ffmpeg4.3.1/include']
-  #   }
+  s.osx.deployment_target = '10.11'
+  
+  s.pod_target_xcconfig = {
+    'ALWAYS_SEARCH_USER_PATHS' => 'YES',
+    'HEADER_SEARCH_PATHS' => [
+      '$(inherited)',
+      '${PODS_TARGET_SRCROOT}/MRVTPKit/MRFFmpegPod/macOS/4.4/include'],
+    'EXCLUDED_ARCHS'=> 'arm64'
+  }
 
-  s.static_framework = true
   s.subspec 'common' do |ss|
     ss.source_files = 'MRVTPKit/common/**/*.{h,m}'
     ss.public_header_files = 'MRVTPKit/common/headers/public/*.h','MRVTPKit/common/*.h'
@@ -43,13 +44,16 @@ TODO: Add long description of the pod here.
 
   s.subspec 'core' do |ss|
     ss.source_files = 'MRVTPKit/core/*.{h,m}'
-    ss.public_header_files = 'MRVTPKit/core/MRVTPKit.h'
   end
 
-  # s.vendored_libraries = 'MRVTPKit/ffmpeg4.3.1/lib/*.a'
-  # s.library = 'z', 'bz2', 'iconv', 'lzma'
-  # s.frameworks = 'CoreFoundation', 'CoreVideo', 'VideoToolbox', 'CoreMedia', 'AudioToolbox'#, 'Security'
+  s.subspec 'sample' do |ss|
+    ss.source_files = 'MRVTPKit/sample/*.{h,m}'
+  end
+  
+  s.vendored_libraries = 'MRVTPKit/MRFFmpegPod/macOS/4.4/lib/*.a'
 
-  s.dependency 'MRFFmpegPod'
+  s.library = 'z', 'bz2', 'iconv', 'lzma'
+  s.frameworks = 'CoreFoundation', 'CoreVideo', 'VideoToolbox', 'CoreMedia', 'AudioToolbox'#, 'Security'
+
   
 end

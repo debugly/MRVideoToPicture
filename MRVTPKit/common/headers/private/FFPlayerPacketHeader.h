@@ -76,6 +76,8 @@ static __inline__ int packet_queue_put_private(PacketQueue *q, AVPacket *pkt)
 ///向队列加入一个packet(线程安全的操作)
 static __inline__ int packet_queue_put(PacketQueue *q, AVPacket *pkt)
 {
+    //av_log(NULL, AV_LOG_INFO,"put pkt:%lld\n", pkt->pts);
+    //标志为读包结束
     int ret;
     ///加锁
     dispatch_semaphore_wait(q->mutex, DISPATCH_TIME_FOREVER);
@@ -114,9 +116,21 @@ static __inline__ int stream_has_enough_packets(AVStream *st, int stream_id, Pac
     (queue->nb_packets > MIN_FRAMES && (!queue->duration || av_q2d(st->time_base) * queue->duration > 1.0));
 }
 
+static __inline__ int packet_queue_nb_remaining(PacketQueue *q) {
+    
+    int nb_packets = 0;
+    ///加锁
+    dispatch_semaphore_wait(q->mutex, DISPATCH_TIME_FOREVER);
+    nb_packets = q->nb_packets;
+    ///解锁
+    dispatch_semaphore_signal(q->mutex);
+    return nb_packets;
+}
+
 /**
  从队列里获取一个 packet，正常获取时返回值大于0
  block 为 1 时则阻塞等待
+ @return 1 got pk; 0 not got pk; -1 queue is abort;
  */
 static __inline__ int packet_queue_get(PacketQueue *q, AVPacket *pkt, int block)
 {
@@ -151,6 +165,7 @@ static __inline__ int packet_queue_get(PacketQueue *q, AVPacket *pkt, int block)
             }
             //释放掉链表节点内存
             av_free(pkt1);
+            
             ret = 1;
             break;
         }
@@ -162,11 +177,13 @@ static __inline__ int packet_queue_get(PacketQueue *q, AVPacket *pkt, int block)
         ///阻塞形式，则休眠3ms后开始新一轮的检查
         else {
             dispatch_semaphore_signal(q->mutex);
-            mr_usleep(3000);
+            mr_msleep(3);
             dispatch_semaphore_wait(q->mutex, DISPATCH_TIME_FOREVER);
         }
     }
     dispatch_semaphore_signal(q->mutex);
+    
+    //av_log(NULL, AV_LOG_INFO,"get pkt:%lld\n", ret);
     return ret;
 }
 

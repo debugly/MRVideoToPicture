@@ -9,7 +9,7 @@
 #import <MRVTPKit/MRVideoToPicture.h>
 
 static const int kMinPictureCount = 8;
-static const int kMaxPictureCount = 30;
+static const int kMaxPictureCount = 100;
 
 @interface MR0x40Task ()<MRVideoToPictureDelegate>
 
@@ -38,7 +38,7 @@ static const int kMaxPictureCount = 30;
 {
     if (self.vtp) {
         self.vtp.delegate = nil;
-        [self.vtp stop];
+        [self.vtp cancel];
         self.vtp = nil;
     }
 }
@@ -94,12 +94,28 @@ static const int kMaxPictureCount = 30;
     vtp.delegate = self;
     vtp.picSaveDir = [self saveDir];
     vtp.perferMaxCount = kMaxPictureCount;
-    vtp.maxPicDimension = 640;
+//    vtp.maxPicDimension = 640;
     vtp.perferUseSeek = NO;
     [vtp prepareToPlay];
     [vtp startConvert];
     self.vtp = vtp;
 }
+
+- (int)perferIntervalForDuration:(int)duration
+{
+    int perferInterval = 10;//duration / kMaxPictureCount;
+//    if (self.duration < 60) {
+//        return 0;
+//    } else if (self.duration < 300) {
+//        return MAX(self.perferInterval / 3, 1);
+//    } else if (self.duration < 1800) {
+//        return MAX(self.perferInterval / 2, 3);
+//    } else {
+//        return MAX(self.perferInterval * 3 / 4, 10);
+//    }
+    return MAX(perferInterval, 1);
+}
+
 
 - (void)vtp:(MRVideoToPicture *)vtp videoOpened:(NSDictionary<NSString *,id> *)info
 {
@@ -108,22 +124,12 @@ static const int kMaxPictureCount = 30;
     if (duration > 0) {
         self.duration = duration;
     }
+    
     if (duration == 0) {
         self.vtp.perferInterval = 1;
     } else {
-        //小于40分钟
-        if(duration < 2400)
-        {
-            self.vtp.perferInterval = duration / kMinPictureCount;
-            if(self.vtp.perferInterval < 1)
-            {
-                self.vtp.perferInterval = 1;
-            }
-            self.vtp.perferMaxCount = kMinPictureCount;
-        } else {
-            self.vtp.perferInterval = duration / kMaxPictureCount;
-            self.vtp.perferMaxCount = kMaxPictureCount;
-        }
+        self.vtp.perferInterval = [self perferIntervalForDuration:duration];
+        self.vtp.perferMaxCount = kMaxPictureCount;
     }
     
     int videoWidth = [info[kMRMovieWidth] intValue];
@@ -136,7 +142,7 @@ static const int kMaxPictureCount = 30;
     self.perferCount = self.vtp.perferMaxCount;
 }
 
-- (void)vtp:(MRVideoToPicture *)vtp convertAnImage:(NSString *)imgPath
+- (void)vtp:(MRVideoToPicture *)vtp convertAnImage:(NSString *)imgPath pst:(int)pst
 {
     if (self.vtp == vtp) {
         self.cost = CFAbsoluteTimeGetCurrent() - self.begin;
@@ -155,24 +161,31 @@ static const int kMaxPictureCount = 30;
         self.frameCount = vtp.frameCount;
         
         if (err) {
-            [self.vtp stop];
+            [self.vtp cancel];
             self.vtp = nil;
             self.status = MR0x40TaskErrorStatus;
             NSLog(@"convert faild:%@",err);
         } else {
-            [self.vtp stop];
+            [self.vtp cancel];
             self.vtp = nil;
             if (self.frameCount == 0) {
                 self.status = MR0x40TaskErrorStatus;
             } else {
                 self.status = MR0x40TaskFinishedStatus;
             }
+            
+            NSLog(@"convert frameCount:%d, cost %0.3f",self.frameCount,self.cost);
         }
         
         if (self.onCompletionBlock) {
             self.onCompletionBlock(self);
         }
     }
+}
+
+- (void)cancel
+{
+    [self.vtp cancel];
 }
 
 @end

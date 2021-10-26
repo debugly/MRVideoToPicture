@@ -90,12 +90,12 @@ typedef void (^MROnConvertFinishedBlock)(MRVideoToPicture*, NSError * _Nullable)
 @property (assign) BOOL perferUseSeek;
 ///图片最大尺寸
 @property (assign) int maxPicDimension;
-///准备
+///准备抽帧
 - (void)prepareToPlay;
-///开始提取
+///开始抽帧
 - (void)startConvert;
-///停止读包
-- (void)stop;
+///取消抽帧
+- (void)cancel;
 
 @end
 

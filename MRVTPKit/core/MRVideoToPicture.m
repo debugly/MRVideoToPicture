@@ -19,6 +19,9 @@
 #import <MobileCoreServices/MobileCoreServices.h>
 #endif
 
+#define USE_WRITE_THREAD 1
+#define USE_READ_THREAD  1
+
 //视频时长；单位s
 kMRMovieInfoKey kMRMovieDuration = @"kMRMovieDuration";
 //视频格式
@@ -51,6 +54,10 @@ void dispatch_sync_to_main_queue(dispatch_block_t block)
 {
     //解码前的视频包缓存队列
     PacketQueue videoq;
+#if USE_WRITE_THREAD
+    //解码后的视频包缓存队列
+    FrameQueue videof;
+#endif
     int64_t lastPkts;
     int lastSeekPos;
     int lastFramePts;//单位s
@@ -59,6 +66,15 @@ void dispatch_sync_to_main_queue(dispatch_block_t block)
 @property (readwrite) NSDictionary <kMRMovieInfoKey,id> * movieInfo;
 //读包线程
 @property (strong) MRThread *workThread;
+#if USE_WRITE_THREAD
+//写入磁盘线程
+@property (strong) MRThread *ioThread;
+#endif
+
+#if USE_READ_THREAD
+//读包线程
+@property (strong) MRThread *readThread;
+#endif
 //视频解码器
 @property (strong) MRDecoder *videoDecoder;
 //图像格式转换/缩放器
@@ -68,6 +84,10 @@ void dispatch_sync_to_main_queue(dispatch_block_t block)
 @property (assign) int frameCount;
 @property (assign) int pktCount;
 @property (assign) int duration;
+//1:Cancel,2:Stop
+@property (atomic, assign) int abort;
+@property (atomic, assign) int deInited;
+@property (atomic, strong) NSError *lastError;
 
 @end
 
@@ -76,22 +96,46 @@ void dispatch_sync_to_main_queue(dispatch_block_t block)
 static int decode_interrupt_cb(void *ctx)
 {
     MRVideoToPicture *player = (__bridge MRVideoToPicture *)ctx;
-    return [player isAbort];
+    return player.abort > 0;
 }
 
-- (void)_stop
+- (void)_stop:(BOOL)isCancel
 {
+    self.abort = isCancel ? 1 : 2;
     //仅仅标记为取消
+    [self.videoDecoder cancel];
+    videoq.abort_request = 1;
+#if USE_WRITE_THREAD
+    videof.abort_request = 1;
+#endif
     if (self.workThread) {
         [self.workThread cancel];
-        [self.videoDecoder cancel];
-        videoq.abort_request = 1;
     }
+#if USE_WRITE_THREAD
+    if (self.ioThread) {
+        [self.ioThread cancel];
+    }
+#endif
+#if USE_READ_THREAD
+    if (self.readThread) {
+        [self.readThread cancel];
+    }
+#endif
 }
 
 - (void)dealloc
 {
-    [self _stop];
+    self.videoDecoder = nil;
+    self.workThread = nil;
+#if USE_READ_THREAD
+    self.readThread = nil;
+#endif
+    
+#if USE_WRITE_THREAD
+    self.ioThread = nil;
+    frame_queue_destory(&self->videof);
+#endif
+    packet_queue_destroy(&self->videoq);
 }
 
 - (instancetype)init
@@ -105,11 +149,6 @@ static int decode_interrupt_cb(void *ctx)
     return self;
 }
 
-- (BOOL)isAbort
-{
-    return !self.workThread || [self.workThread isCanceled];
-}
-
 //准备
 - (void)prepareToPlay
 {
@@ -120,13 +159,22 @@ static int decode_interrupt_cb(void *ctx)
     lastPkts = -1;
     lastSeekPos = -1;
     lastFramePts = -1;
+    
     //初始化视频包队列
     packet_queue_init(&videoq);
+#if USE_WRITE_THREAD
+    frame_queue_init(&videof, 10, "pictq", 0);
+#endif
     //初始化ffmpeg相关函数
     init_ffmpeg_once();
 
     self.workThread = [[MRThread alloc] initWithTarget:self selector:@selector(workFunc) object:nil];
     self.workThread.name = @"readPackets";
+    __weak typeof(self)weakSelf = self;
+    [self.workThread onFinish:^(id info) {
+        __strong typeof(weakSelf)self = weakSelf;
+        [self tryJoin:info];
+    }];
 }
 
 #pragma mark - 打开解码器创建解码线程
@@ -167,28 +215,35 @@ static int decode_interrupt_cb(void *ctx)
     }
 }
 
-//读包循环
+//循环读包，读满了就停止
 - (void)readPacketLoop:(AVFormatContext *)formatCtx
 {
     AVPacket pkt1, *pkt = &pkt1;
-    //循环读包，读满了就停止
-    for (;;) {
-
-        //调用了stop方法，则不再读包
-        if ([self isAbort]) {
-            break;
-        }
+    
+    //调用了stop方法，则不再读包
+    while (self.abort <= 0) {
         
         //已经读完了
         if (self.readEOF) {
             break;
         }
-        
-        if (videoq.size > 1 * 1024 * 1024
-            || (stream_has_enough_packets(self.videoDecoder.stream, self.videoDecoder.streamIdx, &videoq))) {
+#if USE_READ_THREAD
+        //单独使用读包线程
+        if (packet_queue_nb_remaining(&videoq) >= 10) {
+            mr_msleep(3);
+            continue;
+        }
+#else
+        if (packet_queue_nb_remaining(&videoq) >= 1) {
             break;
         }
-        //读包
+#endif
+//        if (videoq.size > 1 * 1024 * 1024
+//            || (stream_has_enough_packets(self.videoDecoder.stream, self.videoDecoder.streamIdx, &videoq))) {
+//            break;
+//        }
+        
+        //开始读
         int ret = av_read_frame(formatCtx, pkt);
         //读包出错
         if (ret < 0) {
@@ -375,6 +430,85 @@ static int decode_interrupt_cb(void *ctx)
     }
 }
 
+#if USE_READ_THREAD
+- (void)readFunc
+{
+    [self readPacketLoop:self.videoDecoder.ic];
+    [self tryJoin:nil];
+}
+#endif
+
+#if USE_WRITE_THREAD
+- (void)ioFunc
+{
+    while (![[NSThread currentThread] isCancelled]) {
+        
+        if (self.readEOF && packet_queue_nb_remaining(&videoq) == 0 && frame_queue_nb_remaining(&videof) == 0) {
+            NSLog(@"frame is eof");
+            break;
+        }
+        //队列里缓存帧大于0，则取出
+        if (frame_queue_nb_remaining(&videof) > 0) {
+            Frame *ap = frame_queue_peek(&videof);
+            [self convertToPic:ap->frame];
+            //释放该节点存储的frame的内存
+            frame_queue_pop(&videof);
+        }
+    }
+}
+#endif
+
+- (void)tryJoin:(NSError *)error
+{
+    if (error) {
+        av_log(NULL, AV_LOG_ERROR, "%s\n",[[error localizedDescription] UTF8String]);
+        self.lastError = error;
+    }
+    BOOL finished = [self.workThread isFinished];
+    NSLog(@"[self.workThread isFinished]:%d,%p",finished,self);
+    
+    if (!finished) {
+        return;
+    }
+    
+#if USE_WRITE_THREAD
+    BOOL ioFinished = [self.ioThread isFinished];
+    NSLog(@"[self.ioThread isFinished]:%d,%p",ioFinished,self);
+    
+    if (!ioFinished) {
+        return;
+    }
+#endif
+    
+#if USE_READ_THREAD
+    BOOL readFinished = [self.readThread isFinished];
+    NSLog(@"[self.readThread isFinished]:%d,%p",readFinished,self);
+    
+    if (!readFinished) {
+        return;
+    }
+#endif
+    
+    //回到主线程销毁资源
+    dispatch_sync_to_main_queue(^{
+        //避免多个线程同时进来这里！
+        if (self.deInited) {
+            return;
+        }
+        self.deInited = YES;
+        
+        if (self.abort != 1) {
+            if ([self.delegate respondsToSelector:@selector(vtp:convertFinished:)]) {
+                [self.delegate vtp:self convertFinished:self.lastError];
+            }
+            
+            if (self.onConvertFinishedBlock) {
+                self.onConvertFinishedBlock(self, self.lastError);
+            }
+        }
+    });
+}
+
 - (void)workFunc
 {
     if (![self.contentPath hasPrefix:@"/"]) {
@@ -384,8 +518,7 @@ static int decode_interrupt_cb(void *ctx)
     AVFormatContext *formatCtx = avformat_alloc_context();
     
     if (!formatCtx) {
-        NSError* error = _make_nserror_desc(FFPlayerErrorCode_AllocFmtCtxFailed, @"创建 AVFormatContext 失败！");
-        [self performErrorResultOnMainThread:error];
+        self.workThread.info = _make_nserror_desc(FFPlayerErrorCode_AllocFmtCtxFailed, @"创建 AVFormatContext 失败！");
         return;
     }
     
@@ -403,11 +536,10 @@ static int decode_interrupt_cb(void *ctx)
         //释放内存
         avformat_free_context(formatCtx);
         //当取消掉时，不给上层回调
-        if ([self isAbort]) {
+        if (self.abort == 1) {
             return;
         }
-        NSError* error = _make_nserror_desc(FFPlayerErrorCode_OpenFileFailed, @"文件打开失败！");
-        [self performErrorResultOnMainThread:error];
+        self.workThread.info = _make_nserror_desc(FFPlayerErrorCode_OpenFileFailed, @"文件打开失败！");
         return;
     }
     
@@ -420,11 +552,9 @@ static int decode_interrupt_cb(void *ctx)
     NSTimeInterval begin = [[NSDate date] timeIntervalSinceReferenceDate];
 #endif
     if (0 != avformat_find_stream_info(formatCtx, NULL)) {
-        avformat_close_input(&formatCtx);
-        NSError* error = _make_nserror_desc(FFPlayerErrorCode_StreamNotFound, @"不能找到流！");
-        [self performErrorResultOnMainThread:error];
         //出错了，销毁下相关结构体
         avformat_close_input(&formatCtx);
+        self.workThread.info = _make_nserror_desc(FFPlayerErrorCode_StreamNotFound, @"不能找到流！");
         return;
     }
     
@@ -448,7 +578,9 @@ static int decode_interrupt_cb(void *ctx)
             [dumpDic setObject:format forKey:kMRMovieContainerFmt];
         }
     }
-    self.duration = (int)(formatCtx->duration / 1000000);
+    if (formatCtx->duration > 0) {
+        self.duration = (int)(formatCtx->duration / 1000000);
+    }
     [dumpDic setObject:@(self.duration) forKey:kMRMovieDuration];
     
     //创建解码器
@@ -500,34 +632,45 @@ static int decode_interrupt_cb(void *ctx)
             self.onVideoOpenedBlock(self, dumpDic);
         }
     });
-
+        
     if (self.videoDecoder) {
-        //开始视频解码，读包完全由解码器控制，解码后转成图片也由解码回调控制
+    #if USE_WRITE_THREAD
+        //创建IO线程，将 frame buffer 里的 frame 转成图片
+        self.ioThread = [[MRThread alloc] initWithTarget:self selector:@selector(ioFunc) object:nil];
+        self.ioThread.name = @"saveImg";
+        __weak typeof(self)weakSelf = self;
+        [self.ioThread onFinish:^(id info) {
+            __strong typeof(weakSelf)self = weakSelf;
+            [self tryJoin:info];
+        }];
+        [self.ioThread start];
+    #endif
+        
+    #if USE_READ_THREAD
+        //创建 Read 线程
+        self.readThread = [[MRThread alloc] initWithTarget:self selector:@selector(readFunc) object:nil];
+        self.readThread.name = @"readFrame";
+        __weak typeof(self)_weakSelf = self;
+        [self.readThread onFinish:^(id info) {
+            __strong typeof(_weakSelf)self = _weakSelf;
+            [self tryJoin:info];
+        }];
+        [self.readThread start];
+    #endif
+            
+        //开始视频解码，读包完全由解码器控制，解码后放到 frame buffer 里
         [self.videoDecoder start];
-        //解码结束了，销毁下相关结构体
-        avformat_close_input(&formatCtx);
-        //正常结束时才回调
-        if (![self isAbort]) {
-            [self performErrorResultOnMainThread:nil];
-        }
-        self.videoDecoder = nil;
-        self.workThread = nil;
-        packet_queue_destroy(&videoq);
+        //解码结束
     } else {
-        //出错了，销毁下相关结构体
-        avformat_close_input(&formatCtx);
+        //出错了
         //有的视频只有一个头，没有包也不能打开解码器；有的是编码格式不支持
         NSString *videoFmt = dumpDic[kMRMovieVideoFmt];
         NSString *msg = [NSString stringWithFormat:@"can't open [%@] video stream",videoFmt];
-        av_log(NULL, AV_LOG_ERROR, "%s\n",[msg UTF8String]);
-        //正常结束时才回调
-        if (![self isAbort]) {
-            NSError* error = _make_nserror_desc(FFPlayerErrorCode_StreamOpenFailed, msg);
-            [self performErrorResultOnMainThread:error];
-        }
-        self.workThread = nil;
-        packet_queue_destroy(&videoq);
+        self.workThread.info = _make_nserror_desc(FFPlayerErrorCode_StreamOpenFailed, msg);
     }
+    
+    //销毁下相关结构体
+    avformat_close_input(&formatCtx);
 }
 
 #pragma mark - MRDecoderDelegate
@@ -535,21 +678,25 @@ static int decode_interrupt_cb(void *ctx)
 - (int)decoder:(MRDecoder *)decoder wantAPacket:(AVPacket *)pkt
 {
     if (decoder == self.videoDecoder) {
-        int ret = -1;
+        int ret = 0;
         do {
-            if ([self isAbort]) {
+            if (self.abort > 0) {
                 break;
             }
-            int r = packet_queue_get(&videoq, pkt, 0);
-            if (r == 1) {
-                ret = 1;
-                break;
-            } else if (r == 0 && !self.readEOF) {
+            
+#if USE_READ_THREAD
+            //持续等frame
+            ret = packet_queue_get(&videoq, pkt, 1);
+            break;
+#else
+            ret = packet_queue_get(&videoq, pkt, 0);
+            if (ret == 0 && !self.readEOF) {
                 //不能从队列里获取pkt，就去读取
                 [self readPacketLoop:decoder.ic];
             } else {
                 break;
             }
+#endif
         } while (1);
         return ret;
     } else {
@@ -580,7 +727,11 @@ static int decode_interrupt_cb(void *ctx)
             outP = frame;
         }
         
+#if USE_WRITE_THREAD
+        frame_queue_push(&videof, outP, 0.0);
+#else
         [self convertToPic:outP];
+#endif
     }
 }
 
@@ -593,46 +744,45 @@ static int decode_interrupt_cb(void *ctx)
     }
 }
 
-- (NSString *)saveAsImage:(CGImageRef _Nonnull)img dir:(NSString *)dir
+- (NSString *)saveAsImage:(CGImageRef _Nonnull)img file:(NSString *)filePath
 {
-    int64_t time = [[NSDate date] timeIntervalSince1970] * 10000;
-    NSString *fileName = nil;
+    NSString *extension = nil;
     CFStringRef imageUTType = NULL;
     
     switch (self.imageType) {
         case MRVTPImageJPG:
         {
-            fileName = [NSString stringWithFormat:@"%lld.jpg",time];
+            extension = @"jpg";
             imageUTType = kUTTypeJPEG;
         }
             break;
         case MRVTPImagePNG:
         {
-            fileName = [NSString stringWithFormat:@"%lld.png",time];
+            extension = @"png";
             imageUTType = kUTTypePNG;
         }
             break;
         case MRVTPImageBMP:
         {
-            fileName = [NSString stringWithFormat:@"%lld.bmp",time];
+            extension = @"bmp";
             imageUTType = kUTTypeBMP;
         }
             break;
         case MRVTPImageTIFF:
         {
-            fileName = [NSString stringWithFormat:@"%lld.tiff",time];
+            extension = @"tiff";
             imageUTType = kUTTypeTIFF;
         }
             break;
         case MRVTPImagePDF:
         {
-            fileName = [NSString stringWithFormat:@"%lld.pdf",time];
+            extension = @"pdf";
             imageUTType = kUTTypePDF;
         }
             break;
         case MRVTPImageGIF:
         {
-            fileName = [NSString stringWithFormat:@"%lld.gif",time];
+            extension = @"gif";
             imageUTType = kUTTypeGIF;
         }
             break;
@@ -667,7 +817,7 @@ static int decode_interrupt_cb(void *ctx)
 //            break;
     }
     
-    NSString *imgPath = [dir stringByAppendingPathComponent:fileName];
+    NSString *imgPath = [filePath stringByAppendingPathExtension:extension];
     NSURL *fileUrl = [NSURL fileURLWithPath:imgPath];
     CGImageDestinationRef destination = CGImageDestinationCreateWithURL((__bridge CFURLRef) fileUrl, imageUTType, 1, NULL);
     if (destination) {
@@ -791,12 +941,17 @@ static int decode_interrupt_cb(void *ctx)
     }
 }
 
-- (NSString *)convertAndSaveAsImage:(AVFrame *)frame
+- (NSString *)convertAndSaveAsImage:(AVFrame *)frame position:(int)position
 {
     @autoreleasepool {
         CGImageRef img = [MRConvertUtil cgImageFromRGBFrame:frame];
         img = [self rotateIfNeed:img angle:self.videoDecoder.rotate];
-        return [self saveAsImage:img dir:self.picSaveDir];
+        
+        int64_t time = position >= 0 ? position : [[NSDate date] timeIntervalSince1970] * 10000;
+        
+        NSString *filePath = [self.picSaveDir stringByAppendingPathComponent:[NSString stringWithFormat:@"%lld",time]];
+        
+        return [self saveAsImage:img file:filePath];
     }
 }
 
@@ -813,8 +968,8 @@ static int decode_interrupt_cb(void *ctx)
         //mpegts pts not start 0
         sec = (int)((frame->pts - self.videoDecoder.startTime) * av_q2d(self.videoDecoder.stream->time_base));
         if (lastFramePts < sec) {
-            av_log(NULL, AV_LOG_INFO, "frame->pts:%ds\n",sec);
-            imgPath = [self convertAndSaveAsImage:frame];
+            //av_log(NULL, AV_LOG_INFO, "frame->pts:%ds\n",sec);
+            imgPath = [self convertAndSaveAsImage:frame position:sec];
             lastFramePts = sec + imgPath.length > 0 ? self.perferInterval : 0;
         } else {
             av_log(NULL, AV_LOG_INFO, "ignored frame->pts:%ds\n",sec);
@@ -823,7 +978,7 @@ static int decode_interrupt_cb(void *ctx)
         // 没有pts
         av_log(NULL, AV_LOG_INFO, "frame no pts\n");
         hasPts = NO;
-        imgPath = [self convertAndSaveAsImage:frame];
+        imgPath = [self convertAndSaveAsImage:frame position:-1];
     }
     
     if (!imgPath) {
@@ -833,10 +988,9 @@ static int decode_interrupt_cb(void *ctx)
     if (self.frameCount >= self.perferMaxCount) {
         //提取的图片够了，就提前停止
         [[NSFileManager defaultManager] removeItemAtPath:imgPath error:nil];
-        //因为stop里有join操作，使用 dispatch_sync 时会导致线程卡住，一直等待join
-        [self _stop];
-        //主动回调下
-        [self performErrorResultOnMainThread:nil];
+        dispatch_sync_to_main_queue(^{
+            [self _stop:NO];
+        });
     } else {
         self.frameCount++;
         dispatch_sync_to_main_queue(^{
@@ -870,14 +1024,14 @@ static int decode_interrupt_cb(void *ctx)
     [self.workThread start];
 }
 
-- (void)stop
+- (void)cancel
 {
     //主动stop时，则取消掉后续回调
     self.delegate = nil;
     self.onVideoOpenedBlock = nil;
     self.onConvertAnImageBlock = nil;
     self.onConvertFinishedBlock = nil;
-    [self _stop];
+    [self _stop:YES];
 }
 
 @end

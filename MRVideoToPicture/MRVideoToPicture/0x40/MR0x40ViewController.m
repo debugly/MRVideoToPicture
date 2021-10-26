@@ -27,9 +27,13 @@ static NSString *const kTaskStatusIdentifier = @"status";
 @interface MR0x40ViewController ()<MRDragViewDelegate,NSTableViewDelegate,NSTableViewDataSource>
 
 @property (weak) IBOutlet MRDragView *dragView;
-@property (strong) NSMutableArray *taskArr;
+@property (strong) NSArray *taskArr;
 @property (strong) NSArray *executingQueue;
 @property (strong) NSTableView *tableView;
+@property (assign) int maxConcurrent;
+@property (copy) NSString * totalCost;
+@property (strong) NSArray <NSURL *> *fileArr;
+@property (assign) double beginStamp;
 
 @end
 
@@ -58,11 +62,11 @@ static NSString *const kTaskStatusIdentifier = @"status";
     NSScrollView * scrollView = [[NSScrollView alloc] init];
     scrollView.hasVerticalScroller = NO;
     scrollView.hasHorizontalScroller = NO;
-    scrollView.frame = self.view.bounds;
+    scrollView.frame = self.dragView.frame;
     scrollView.autoresizingMask = NSViewHeightSizable | NSViewWidthSizable;
     [self.view addSubview:scrollView];
     
-    NSTableView *tableView = [[NSTableView alloc] initWithFrame:self.view.bounds];
+    NSTableView *tableView = [[NSTableView alloc] initWithFrame:scrollView.bounds];
     tableView.autoresizingMask = NSViewHeightSizable | NSViewWidthSizable;
     tableView.intercellSpacing = NSMakeSize(0, 0);
 //    if (@available(macOS 11.0, *)) {
@@ -212,8 +216,9 @@ static NSString *const kTaskStatusIdentifier = @"status";
     tableView.dataSource = self;
     tableView.rowHeight = 35;
     scrollView.contentView.documentView = tableView;
-    
     self.tableView = tableView;
+    
+    self.maxConcurrent = 1;
 }
 
 - (NSInteger)numberOfRowsInTableView:(NSTableView *)tableView
@@ -280,7 +285,7 @@ static NSString *const kTaskStatusIdentifier = @"status";
 
 - (void)tableView:(NSTableView *)tableView sortDescriptorsDidChange:(NSArray<NSSortDescriptor *> *)oldDescriptors
 {
-    [self.taskArr sortUsingDescriptors:oldDescriptors];
+    self.taskArr = [self.taskArr sortedArrayUsingDescriptors:oldDescriptors];
     [tableView reloadData];
 }
 
@@ -304,7 +309,7 @@ static NSString *const kTaskStatusIdentifier = @"status";
 
 - (void)executeMoreTask
 {
-    while ([self.executingQueue count] < 5) {
+    while ([self.executingQueue count] < self.maxConcurrent) {
         
         MR0x40Task *firstWaitTask = nil;
         for (MR0x40Task *task in [self.taskArr copy]) {
@@ -321,10 +326,10 @@ static NSString *const kTaskStatusIdentifier = @"status";
             self.executingQueue = executingQueue;
             
             __weakSelf__
-            
             [firstWaitTask onReceivedAPicture:^(MR0x40Task * _Nonnull task, NSString * _Nonnull picPath) {
                 __strongSelf__
                 [self refreshRowWithTask:task];
+                self.totalCost = [NSString stringWithFormat:@"%0.2fs",CFAbsoluteTimeGetCurrent() - self.beginStamp];
             }];
             
             [firstWaitTask start:^(MR0x40Task *task){
@@ -352,7 +357,7 @@ static NSString *const kTaskStatusIdentifier = @"status";
         BOOL isExist = [[NSFileManager defaultManager] fileExistsAtPath:[url path] isDirectory:&isDirectory];
         if (isExist) {
             if (isDirectory) {
-                ///扫描文件夹
+                //扫描文件夹
                 NSString *dir = [url path];
                 NSArray *dicArr = [MRUtil scanFolderWithPath:dir filter:[MRUtil videoType]];
                 if ([dicArr count] > 0) {
@@ -369,6 +374,7 @@ static NSString *const kTaskStatusIdentifier = @"status";
         }
     }
     
+    NSMutableArray *arr = [NSMutableArray array];
     if ([bookmarkArr count] > 0) {
         for (NSDictionary *dic in bookmarkArr) {
             NSURL *url = dic[@"url"];
@@ -377,15 +383,22 @@ static NSString *const kTaskStatusIdentifier = @"status";
                 continue;
             }
             
-            MR0x40Task *task = [[MR0x40Task alloc] initWithURL:url];
-            if (!self.taskArr) {
-                self.taskArr = [NSMutableArray array];
-            }
-            [self.taskArr addObject:task];
+            [arr addObject:url];
         }
         
-        [self executeMoreTask];
+        NSMutableArray *fileArr = [NSMutableArray arrayWithArray:self.fileArr];
+        [fileArr addObjectsFromArray:arr];
+        self.fileArr = [fileArr copy];
     }
+    
+    NSMutableArray *taskArr = [NSMutableArray array];
+    for (NSURL *url in self.fileArr) {
+        MR0x40Task *task = [[MR0x40Task alloc] initWithURL:url];
+        [taskArr addObject:task];
+    }
+    self.taskArr = [taskArr copy];
+    
+    [self.tableView reloadData];
 }
 
 - (NSDragOperation)acceptDragOperation:(NSArray<NSURL *> *)list
@@ -397,7 +410,7 @@ static NSString *const kTaskStatusIdentifier = @"status";
             BOOL isExist = [[NSFileManager defaultManager] fileExistsAtPath:[url path] isDirectory:&isDirectory];
             if (isExist) {
                 if (isDirectory) {
-                   ///扫描文件夹
+                   //扫描文件夹
                    NSString *dir = [url path];
                    NSArray *dicArr = [MRUtil scanFolderWithPath:dir filter:[MRUtil videoType]];
                     if ([dicArr count] > 0) {
@@ -413,6 +426,34 @@ static NSString *const kTaskStatusIdentifier = @"status";
         }
     }
     return NSDragOperationNone;
+}
+
+- (void)cleanAllTask
+{
+    self.taskArr = nil;
+    for (MR0x40Task *task in self.executingQueue) {
+        [task cancel];
+    }
+    self.executingQueue = nil;
+    [self.tableView reloadData];
+    self.totalCost = @"";
+}
+
+- (void)restartAllTask
+{
+    [self cleanAllTask];
+    
+    self.beginStamp = CFAbsoluteTimeGetCurrent();
+    
+    NSMutableArray *taskArr = [NSMutableArray array];
+    for (NSURL *url in self.fileArr) {
+        MR0x40Task *task = [[MR0x40Task alloc] initWithURL:url];
+        [taskArr addObject:task];
+    }
+    self.taskArr = [taskArr copy];
+    [self.tableView reloadData];
+    
+    [self executeMoreTask];
 }
 
 @end

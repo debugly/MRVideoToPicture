@@ -14,6 +14,8 @@
 @property (assign) SEL threadSelector;//实际调度任务
 @property (strong) id threadArgs;
 @property (copy) void(^workBlock)(void);
+@property (copy) void(^finishBlock)(id);
+@property (assign, atomic) BOOL finished;
 
 @end
 
@@ -53,6 +55,11 @@
     return self;
 }
 
+- (void)onFinish:(void (^)(id))block
+{
+    self.finishBlock = block;
+}
+
 - (void)workFunc
 {
     //取消了就直接返回，不再处理
@@ -77,6 +84,12 @@
             if (self.workBlock) {
                 self.workBlock();
             }
+            
+            self.finished = YES;
+            
+            if (self.finishBlock) {
+                self.finishBlock(self.info);
+            }
         }
     }
 }
@@ -100,7 +113,8 @@
 
 - (BOOL)isFinished
 {
-    return [self.thread isFinished];
+    return self.finished;
+    //return [self.thread isFinished];
 }
 
 @end

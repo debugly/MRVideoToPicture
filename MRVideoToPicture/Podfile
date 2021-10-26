@@ -1,15 +1,35 @@
 # Uncomment the next line to define a global platform for your project
 platform :osx, '10.11'
 
-FF_VER='4.3'
-OpenSSL_VER='1.1.1h'
+#1.7.0
+install! 'cocoapods', :generate_multiple_pod_projects => true
+
+
+pre_install do |installer|
+  puts `
+    echo '-------------------'
+    VER='4.4'
+    cd '../MRVTPKit'
+    if [[ ! -d "MRFFmpegPod/macOS/${VER}" ]];then
+      echo "ffmpeg ${VER} not exist,will download it."
+      wget "https://ifoxdev.hd.sohu.com/ffpods/20210913/MRFFmpegPod-macOS-${VER}.zip" -q -O "MRFFmpegPod-macOS-${VER}.zip"
+      if [[ $? -eq 0 ]];then
+        echo "ffmpeg ${VER} downloaded,will unzip it"
+        unzip -q "MRFFmpegPod-macOS-${VER}.zip"
+        rm -f "MRFFmpegPod-macOS-${VER}.zip"
+        echo "using ffmpeg ${VER}"
+      else
+        echo "ffmpeg ${VER} download failed."
+      fi
+    else
+      echo "using ffmpeg ${VER}"
+    fi
+    echo '-------------------'
+  `
+end
 
 target 'MRVideoToPicture' do
   # Comment the next line if you don't want to use dynamic frameworks
-  # use_frameworks!
-
-  # Pods for MRVideoToPicture
-  # pod 'MROpenSSLPod', :podspec => "https://ifoxdev.hd.sohu.com/ffpods/MROpenSSL#{OpenSSL_VER}.podspec"
-  pod 'MRFFmpegPod', :podspec => "https://ifoxdev.hd.sohu.com/ffpods/MRFFmpeg#{FF_VER}.podspec"
+  use_frameworks!
   pod 'MRVTPKit', :path => '../'
 end
